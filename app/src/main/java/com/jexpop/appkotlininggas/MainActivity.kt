@@ -1,44 +1,43 @@
 package com.jexpop.appkotlininggas
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.jexpop.appkotlininggas.data.repository.AuthRepository
+import com.jexpop.appkotlininggas.ui.screens.LoginScreen
+import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
 import com.jexpop.appkotlininggas.ui.theme.AppKotlinIngGasTheme
-import io.github.jan.supabase.postgrest.from
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val authRepository = AuthRepository()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Test de conexión con Supabase
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val result = supabase.from("payment_type").select()
-                Log.d("SUPABASE", "Conexión OK: ${result.data}")
-            } catch (e: Exception) {
-                Log.e("SUPABASE", "Error de conexión: ${e.message}")
-            }
-        }
-
         setContent {
             AppKotlinIngGasTheme {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Probando conexión con Supabase...")
+                var isAuthenticated by remember {
+                    mutableStateOf(authRepository.isAuthenticated())
+                }
+
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    if (isAuthenticated) {
+                        ImportScreen(
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    } else {
+                        LoginScreen(
+                            modifier = Modifier.padding(innerPadding),
+                            onLoginSuccess = { isAuthenticated = true }
+                        )
+                    }
                 }
             }
         }

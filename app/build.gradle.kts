@@ -77,4 +77,10 @@ dependencies {
 
     // Serialización (para mapear tablas a data classes)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // ViewModel con Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+
+    // Compose Runtime
+    implementation("androidx.compose.runtime:runtime:1.7.8")
 }
