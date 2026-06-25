@@ -1,5 +1,6 @@
 package com.jexpop.appkotlininggas.ui.screens
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jexpop.appkotlininggas.data.repository.AuthRepository
@@ -25,6 +26,19 @@ class LoginViewModel(
         viewModelScope.launch {
             _state.value = LoginState.Loading
             authRepository.signInWithEmail(email, password)
+                .onSuccess {
+                    _state.value = LoginState.Success
+                }
+                .onFailure { error ->
+                    _state.value = LoginState.Error(error.message ?: "Error desconocido")
+                }
+        }
+    }
+
+    fun signInWithGoogle(context: Context) {
+        viewModelScope.launch {
+            _state.value = LoginState.Loading
+            authRepository.signInWithGoogle(context)
                 .onSuccess {
                     _state.value = LoginState.Success
                 }

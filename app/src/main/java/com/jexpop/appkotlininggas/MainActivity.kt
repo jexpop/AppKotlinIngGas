@@ -1,5 +1,6 @@
 package com.jexpop.appkotlininggas
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,7 @@ import com.jexpop.appkotlininggas.data.repository.AuthRepository
 import com.jexpop.appkotlininggas.ui.screens.LoginScreen
 import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
 import com.jexpop.appkotlininggas.ui.theme.AppKotlinIngGasTheme
+import io.github.jan.supabase.auth.handleDeeplinks
 
 class MainActivity : ComponentActivity() {
 
@@ -20,6 +22,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Maneja el deep link de vuelta desde Google OAuth
+        supabase.handleDeeplinks(intent)
+
         enableEdgeToEdge()
         setContent {
             AppKotlinIngGasTheme {
@@ -41,5 +47,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        supabase.handleDeeplinks(intent)
     }
 }

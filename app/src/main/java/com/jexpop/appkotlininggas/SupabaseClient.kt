@@ -1,8 +1,8 @@
 package com.jexpop.appkotlininggas
 
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.storage.Storage
 
 val supabase = createSupabaseClient(
@@ -10,6 +10,9 @@ val supabase = createSupabaseClient(
     supabaseKey = BuildConfig.SUPABASE_KEY
 ) {
     install(Postgrest)
-    install(Auth)
+    install(Auth) {
+        scheme = "ecogar"
+        host = "login-callback"
+    }
     install(Storage)
 }

@@ -69,6 +69,10 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
 
+    // Google Auth para Supabase
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("androidx.browser:browser:1.8.0")
+
     // Motor HTTP requerido por Supabase
     implementation("io.ktor:ktor-client-android:3.1.3")
 
