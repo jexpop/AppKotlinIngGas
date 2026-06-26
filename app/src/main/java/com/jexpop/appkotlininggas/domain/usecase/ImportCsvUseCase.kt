@@ -1,10 +1,12 @@
 package com.jexpop.appkotlininggas.domain.usecase
 
 import com.jexpop.appkotlininggas.data.parser.CsvParser
+import com.jexpop.appkotlininggas.data.repository.PeriodRepository
 import com.jexpop.appkotlininggas.data.repository.TransactionRepository
 
 class ImportCsvUseCase(
-    private val repository: TransactionRepository = TransactionRepository()
+    private val repository: TransactionRepository = TransactionRepository(),
+    private val periodRepository: PeriodRepository = PeriodRepository()
 ) {
 
     suspend fun execute(
@@ -16,11 +18,26 @@ class ImportCsvUseCase(
             if (transactions.isEmpty()) {
                 throw Exception("NO_TRANSACTIONS")
             }
-            val yearMonth = transactions.first().transactionDate.substring(0, 7)
+
+            val yearMonth = transactions.first().transactionDate.substring(0, 7).replace("-", "")
+            val year = yearMonth.substring(0, 4)
             val paymentType = transactions.first().paymentType
+
+            // Gestionar período y mes
+            periodRepository.getOrCreateYear(year).getOrThrow()
+            val periodMonth = periodRepository.getOrCreateMonth(yearMonth).getOrThrow()
+            periodRepository.setCurrentMonth(periodMonth.id!!).getOrThrow()
+
+            // Borrar transacciones existentes del mismo mes, banco y tipo
             repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
-            repository.insertTransactions(transactions).getOrThrow()
-            transactions.size
+
+            // Asignar period_month_id a cada transacción
+            val transactionsWithPeriod = transactions.map {
+                it.copy(periodMonthId = periodMonth.id)
+            }
+
+            repository.insertTransactions(transactionsWithPeriod).getOrThrow()
+            transactionsWithPeriod.size
         }
     }
 }

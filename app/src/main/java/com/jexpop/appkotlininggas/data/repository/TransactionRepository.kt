@@ -20,8 +20,10 @@ class TransactionRepository {
         paymentType: String
     ): Result<Unit> {
         return runCatching {
-            val startDate = "$yearMonth-01"
-            val endDate = "$yearMonth-31"
+            val year = yearMonth.substring(0, 4)
+            val month = yearMonth.substring(4, 6)
+            val startDate = "$year-$month-01"
+            val endDate = "$year-$month-31"
             supabase.from("transaction").delete {
                 filter {
                     gte("transaction_date", startDate)
@@ -35,10 +37,15 @@ class TransactionRepository {
 
     suspend fun getTransactionsByMonth(month: String): Result<List<Transaction>> {
         return runCatching {
+            val year = month.substring(0, 4)
+            val m = month.substring(4, 6)
+            val startDate = "$year-$m-01"
+            val endDate = "$year-$m-31"
             supabase.from("transaction")
                 .select {
                     filter {
-                        like("transaction_date", "$month%")
+                        gte("transaction_date", startDate)
+                        lte("transaction_date", endDate)
                     }
                 }
                 .decodeList<Transaction>()
