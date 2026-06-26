@@ -1,6 +1,5 @@
 package com.jexpop.appkotlininggas.domain.usecase
 
-import com.jexpop.appkotlininggas.data.model.CsvType
 import com.jexpop.appkotlininggas.data.parser.CsvParser
 import com.jexpop.appkotlininggas.data.repository.TransactionRepository
 
@@ -10,24 +9,21 @@ class ImportCsvUseCase(
 
     suspend fun execute(
         content: String,
-        csvType: CsvType,
         bankId: Int
     ): Result<Int> {
         return runCatching {
-            val transactions = CsvParser.parse(content, csvType, bankId)
+            val transactions = CsvParser.parse(content, bankId)
             if (transactions.isEmpty()) {
                 throw Exception("No se encontraron transacciones en el fichero")
             }
 
-            // Detectar el año+mes del CSV (todas las transacciones son del mismo mes)
             val yearMonth = transactions.first().transactionDate.substring(0, 7)
+            val paymentType = transactions.first().paymentType
 
-            // Borrar transacciones existentes del mismo mes y banco
-            repository.deleteByMonthAndBank(yearMonth, bankId).getOrThrow()
+            // Borra solo las transacciones del mismo mes, banco y tipo de pago
+            repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
 
-            // Insertar las nuevas transacciones
             repository.insertTransactions(transactions).getOrThrow()
-
             transactions.size
         }
     }

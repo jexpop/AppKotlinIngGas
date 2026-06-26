@@ -11,8 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.jexpop.appkotlininggas.data.model.Bank
-import com.jexpop.appkotlininggas.data.model.CsvType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,7 +22,6 @@ fun ImportScreen(
     val state by viewModel.state.collectAsState()
     val banks by viewModel.banks.collectAsState()
     val selectedBank by viewModel.selectedBank.collectAsState()
-    var selectedCsvType by remember { mutableStateOf(CsvType.ACCOUNT) }
     var expanded by remember { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
@@ -35,7 +32,7 @@ fun ImportScreen(
                 .openInputStream(it)
                 ?.bufferedReader()
                 ?.readText() ?: return@let
-            viewModel.importCsv(content, selectedCsvType)
+            viewModel.importCsv(content)
         }
     }
 
@@ -88,7 +85,6 @@ fun ImportScreen(
             }
             Spacer(modifier = Modifier.height(24.dp))
         } else if (banks.size == 1) {
-            // Si solo hay un banco se muestra como texto informativo
             Text(
                 text = "Banco: ${banks.first().name}",
                 style = MaterialTheme.typography.bodyMedium,
@@ -96,24 +92,6 @@ fun ImportScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
         }
-
-        // Selector de tipo de CSV
-        Text("Tipo de fichero:", style = MaterialTheme.typography.labelLarge)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = selectedCsvType == CsvType.ACCOUNT,
-                onClick = { selectedCsvType = CsvType.ACCOUNT },
-                label = { Text("Cuenta corriente") }
-            )
-            FilterChip(
-                selected = selectedCsvType == CsvType.CREDIT_CARD,
-                onClick = { selectedCsvType = CsvType.CREDIT_CARD },
-                label = { Text("Tarjeta crédito") }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
 
         // Botón seleccionar fichero
         Button(

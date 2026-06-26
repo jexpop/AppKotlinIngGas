@@ -14,7 +14,11 @@ class TransactionRepository {
         }
     }
 
-    suspend fun deleteByMonthAndBank(yearMonth: String, bankId: Int): Result<Unit> {
+    suspend fun deleteByMonthBankAndType(
+        yearMonth: String,
+        bankId: Int,
+        paymentType: String
+    ): Result<Unit> {
         return runCatching {
             val startDate = "$yearMonth-01"
             val endDate = "$yearMonth-31"
@@ -23,6 +27,7 @@ class TransactionRepository {
                     gte("transaction_date", startDate)
                     lte("transaction_date", endDate)
                     eq("bank_id", bankId)
+                    eq("payment_type", paymentType)
                 }
             }
         }

@@ -3,7 +3,6 @@ package com.jexpop.appkotlininggas.ui.screens.importcsv
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jexpop.appkotlininggas.data.model.Bank
-import com.jexpop.appkotlininggas.data.model.CsvType
 import com.jexpop.appkotlininggas.data.repository.BankRepository
 import com.jexpop.appkotlininggas.domain.usecase.ImportCsvUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,14 +53,14 @@ class ImportViewModel(
         _selectedBank.value = bank
     }
 
-    fun importCsv(content: String, csvType: CsvType) {
+    fun importCsv(content: String) {
         val bankId = _selectedBank.value?.id ?: run {
             _state.value = ImportState.Error("Selecciona un banco")
             return
         }
         viewModelScope.launch {
             _state.value = ImportState.Loading
-            importCsvUseCase.execute(content, csvType, bankId)
+            importCsvUseCase.execute(content, bankId)
                 .onSuccess { count ->
                     _state.value = ImportState.Success(count)
                 }
