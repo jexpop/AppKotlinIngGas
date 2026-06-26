@@ -6,7 +6,8 @@ import com.jexpop.appkotlininggas.data.repository.TransactionRepository
 
 class ImportCsvUseCase(
     private val repository: TransactionRepository = TransactionRepository(),
-    private val periodRepository: PeriodRepository = PeriodRepository()
+    private val periodRepository: PeriodRepository = PeriodRepository(),
+    private val categorizationUseCase: CategorizationUseCase = CategorizationUseCase()
 ) {
 
     suspend fun execute(
@@ -31,15 +32,18 @@ class ImportCsvUseCase(
             // Borrar transacciones existentes del mismo mes, banco y tipo
             repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
 
-            // Asignar period_month_id a cada transacción
+            // Asignar period_month_id y ordenar por fecha
             val transactionsWithPeriod = transactions
                 .sortedBy { it.transactionDate }
-                .map { transaction ->
-                    transaction.copy(periodMonthId = periodMonth.id)
-                }
+                .map { it.copy(periodMonthId = periodMonth.id) }
 
-            repository.insertTransactions(transactionsWithPeriod).getOrThrow()
-            transactionsWithPeriod.size
+            // Categorizar
+            val categorizedTransactions = categorizationUseCase
+                .categorize(transactionsWithPeriod, yearMonth)
+                .getOrThrow()
+
+            repository.insertTransactions(categorizedTransactions).getOrThrow()
+            categorizedTransactions.size
         }
     }
 }
