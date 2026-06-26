@@ -15,7 +15,6 @@ data class Transaction(
     @SerialName("credit_month") val creditMonth: String? = null,
     @SerialName("group_id") val groupId: Int? = null,
     @SerialName("period_month_id") val periodMonthId: Int? = null,
-    @SerialName("sequence_number") val sequenceNumber: Int? = null,
     @SerialName("bank_id") val bankId: Int? = null,
     @SerialName("created_at") val createdAt: String? = null
 )
