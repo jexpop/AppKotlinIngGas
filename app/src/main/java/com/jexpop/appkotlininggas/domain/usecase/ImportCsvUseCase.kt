@@ -31,10 +31,15 @@ class ImportCsvUseCase(
             // Borrar transacciones existentes del mismo mes, banco y tipo
             repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
 
-            // Asignar period_month_id a cada transacción
-            val transactionsWithPeriod = transactions.map {
-                it.copy(periodMonthId = periodMonth.id)
-            }
+            // Asignar period_month_id y sequence_number a cada transacción
+            val transactionsWithPeriod = transactions
+                .sortedBy { it.transactionDate }
+                .mapIndexed { index, transaction ->
+                    transaction.copy(
+                        periodMonthId = periodMonth.id,
+                        sequenceNumber = index + 1
+                    )
+                }
 
             repository.insertTransactions(transactionsWithPeriod).getOrThrow()
             transactionsWithPeriod.size

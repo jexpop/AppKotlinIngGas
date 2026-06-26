@@ -9,19 +9,13 @@ class PeriodRepository {
 
     suspend fun getOrCreateYear(year: String): Result<Unit> {
         return runCatching {
-            android.util.Log.d("PERIOD", "Buscando año: $year")
-            val existing = supabase.from("period")
-                .select {
-                    filter { eq("year", year) }
+            android.util.Log.d("PERIOD", "Upsert año: $year")
+            supabase.from("period")
+                .upsert(Period(year = year)) {
+                    onConflict = "year"
+                    ignoreDuplicates = true
                 }
-                .decodeList<Period>()
-
-            android.util.Log.d("PERIOD", "Años encontrados: ${existing.size}")
-            if (existing.isEmpty()) {
-                android.util.Log.d("PERIOD", "Insertando año: $year")
-                supabase.from("period").insert(Period(year = year))
-                android.util.Log.d("PERIOD", "Año insertado")
-            }
+            android.util.Log.d("PERIOD", "Upsert año completado")
         }
     }
 
