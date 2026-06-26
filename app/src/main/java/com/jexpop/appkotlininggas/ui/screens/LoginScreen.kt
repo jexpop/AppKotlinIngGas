@@ -7,15 +7,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jexpop.appkotlininggas.R
 
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = viewModel(),
+    viewModel: LoginViewModel = viewModel(factory = LoginViewModel.Factory),
     onLoginSuccess: () -> Unit
 ) {
     val context = LocalContext.current
@@ -38,32 +40,30 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "ECOGAR",
+            text = stringResource(R.string.login_title),
             style = MaterialTheme.typography.headlineLarge
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Gestión de gastos domésticos",
+            text = stringResource(R.string.login_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // Botón Google
         Button(
             onClick = { viewModel.signInWithGoogle(context) },
             enabled = state !is LoginState.Loading,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Entrar con Google")
+            Text(stringResource(R.string.login_google_button))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Separador
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -79,11 +79,12 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Acceso admin discreto
         TextButton(onClick = { showAdminLogin = !showAdminLogin }) {
             Text(
-                text = if (showAdminLogin) "Ocultar acceso administrador"
-                else "Acceso administrador",
+                text = stringResource(
+                    if (showAdminLogin) R.string.login_admin_hide
+                    else R.string.login_admin_show
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -95,7 +96,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.login_email_label)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -106,7 +107,7 @@ fun LoginScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Contraseña") },
+                label = { Text(stringResource(R.string.login_password_label)) },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
@@ -120,7 +121,7 @@ fun LoginScreen(
                 enabled = state !is LoginState.Loading && email.isNotBlank() && password.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Acceder")
+                Text(stringResource(R.string.login_button))
             }
         }
 
@@ -133,7 +134,7 @@ fun LoginScreen(
         if (state is LoginState.Error) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = (state as LoginState.Error).message,
+                text = stringResource(R.string.error_prefix, (state as LoginState.Error).message),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )

@@ -6,8 +6,7 @@ import com.jexpop.appkotlininggas.data.parser.detector.CsvFormatDetector
 object CsvParser {
 
     fun parse(content: String, bankId: Int): List<Transaction> {
-        val strategy = CsvFormatDetector.detect(content)
-            ?: throw Exception("Formato de fichero no reconocido")
-        return strategy.parse(content, bankId)
+        return CsvFormatDetector.detect(content)?.parse(content, bankId)
+            ?: throw Exception("FORMAT_NOT_RECOGNIZED")
     }
 }

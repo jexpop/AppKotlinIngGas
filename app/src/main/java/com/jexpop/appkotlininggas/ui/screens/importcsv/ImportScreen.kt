@@ -9,14 +9,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jexpop.appkotlininggas.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImportScreen(
     modifier: Modifier = Modifier,
-    viewModel: ImportViewModel = viewModel()
+    viewModel: ImportViewModel = viewModel(factory = ImportViewModel.Factory)
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsState()
@@ -44,7 +46,7 @@ fun ImportScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Importar CSV",
+            text = stringResource(R.string.import_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -52,7 +54,10 @@ fun ImportScreen(
 
         // Combo de bancos
         if (banks.size > 1) {
-            Text("Banco:", style = MaterialTheme.typography.labelLarge)
+            Text(
+                stringResource(R.string.import_bank_label),
+                style = MaterialTheme.typography.labelLarge
+            )
             Spacer(modifier = Modifier.height(8.dp))
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -60,7 +65,7 @@ fun ImportScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
-                    value = selectedBank?.name ?: "Selecciona un banco",
+                    value = selectedBank?.name ?: stringResource(R.string.import_bank_select),
                     onValueChange = {},
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
@@ -86,7 +91,7 @@ fun ImportScreen(
             Spacer(modifier = Modifier.height(24.dp))
         } else if (banks.size == 1) {
             Text(
-                text = "Banco: ${banks.first().name}",
+                text = stringResource(R.string.import_bank_prefix, banks.first().name),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -99,37 +104,36 @@ fun ImportScreen(
             enabled = state !is ImportState.Loading && selectedBank != null,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Seleccionar fichero CSV")
+            Text(stringResource(R.string.import_button))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Estado
         when (val current = state) {
             is ImportState.Idle -> {}
             is ImportState.Loading -> {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Importando...")
+                Text(stringResource(R.string.import_loading))
             }
             is ImportState.Success -> {
                 Text(
-                    text = "✓ ${current.count} transacciones importadas",
+                    text = stringResource(R.string.import_success, current.count),
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextButton(onClick = { viewModel.resetState() }) {
-                    Text("Importar otro fichero")
+                    Text(stringResource(R.string.import_another))
                 }
             }
             is ImportState.Error -> {
                 Text(
-                    text = "Error: ${current.message}",
+                    text = stringResource(R.string.error_prefix, current.message),
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextButton(onClick = { viewModel.resetState() }) {
-                    Text("Reintentar")
+                    Text(stringResource(R.string.import_retry))
                 }
             }
         }

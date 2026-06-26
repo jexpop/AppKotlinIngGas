@@ -14,15 +14,11 @@ class ImportCsvUseCase(
         return runCatching {
             val transactions = CsvParser.parse(content, bankId)
             if (transactions.isEmpty()) {
-                throw Exception("No se encontraron transacciones en el fichero")
+                throw Exception("NO_TRANSACTIONS")
             }
-
             val yearMonth = transactions.first().transactionDate.substring(0, 7)
             val paymentType = transactions.first().paymentType
-
-            // Borra solo las transacciones del mismo mes, banco y tipo de pago
             repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
-
             repository.insertTransactions(transactions).getOrThrow()
             transactions.size
         }

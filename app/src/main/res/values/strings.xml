@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">AppKotlinIngGas</string>
+
+    <!-- Login -->
+    <string name="login_title">ECOGAR</string>
+    <string name="login_subtitle">Gestión de gastos domésticos</string>
+    <string name="login_google_button">Entrar con Google</string>
+    <string name="login_admin_show">Acceso administrador</string>
+    <string name="login_admin_hide">Ocultar acceso administrador</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_password_label">Contraseña</string>
+    <string name="login_button">Acceder</string>
+
+    <!-- Import -->
+    <string name="import_title">Importar CSV</string>
+    <string name="import_bank_label">Banco:</string>
+    <string name="import_bank_select">Selecciona un banco</string>
+    <string name="import_bank_prefix">Banco: %1$s</string>
+    <string name="import_button">Seleccionar fichero CSV</string>
+    <string name="import_loading">Importando…</string>
+    <string name="import_success">✓ %1$d transacciones importadas</string>
+    <string name="import_retry">Reintentar</string>
+    <string name="import_another">Importar otro fichero</string>
+
+    <!-- Errores -->
+    <string name="error_no_bank_selected">Selecciona un banco</string>
+    <string name="error_no_transactions">No se encontraron transacciones en el fichero</string>
+    <string name="error_unknown">Error desconocido</string>
+    <string name="error_loading_banks">Error cargando bancos: %1$s</string>
+    <string name="error_format_not_recognized">Formato de fichero no reconocido</string>
+    <string name="error_prefix">Error: %1$s</string>
 </resources>

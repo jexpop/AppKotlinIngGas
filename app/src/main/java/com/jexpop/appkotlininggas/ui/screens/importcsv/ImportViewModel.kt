@@ -1,13 +1,18 @@
 package com.jexpop.appkotlininggas.ui.screens.importcsv
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.data.model.Bank
 import com.jexpop.appkotlininggas.data.repository.BankRepository
 import com.jexpop.appkotlininggas.domain.usecase.ImportCsvUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.ViewModel
 
 sealed class ImportState {
     object Idle : ImportState()
@@ -17,9 +22,12 @@ sealed class ImportState {
 }
 
 class ImportViewModel(
+    application: Application,
     private val importCsvUseCase: ImportCsvUseCase = ImportCsvUseCase(),
     private val bankRepository: BankRepository = BankRepository()
-) : ViewModel() {
+) : AndroidViewModel(application) {
+
+    private val context = application.applicationContext
 
     private val _state = MutableStateFlow<ImportState>(ImportState.Idle)
     val state: StateFlow<ImportState> = _state
@@ -44,7 +52,9 @@ class ImportViewModel(
                     }
                 }
                 .onFailure { error ->
-                    _state.value = ImportState.Error("Error cargando bancos: ${error.message}")
+                    _state.value = ImportState.Error(
+                        context.getString(R.string.error_loading_banks, error.message)
+                    )
                 }
         }
     }
@@ -55,7 +65,9 @@ class ImportViewModel(
 
     fun importCsv(content: String) {
         val bankId = _selectedBank.value?.id ?: run {
-            _state.value = ImportState.Error("Selecciona un banco")
+            _state.value = ImportState.Error(
+                context.getString(R.string.error_no_bank_selected)
+            )
             return
         }
         viewModelScope.launch {
@@ -65,7 +77,12 @@ class ImportViewModel(
                     _state.value = ImportState.Success(count)
                 }
                 .onFailure { error ->
-                    _state.value = ImportState.Error(error.message ?: "Error desconocido")
+                    val message = when (error.message) {
+                        "FORMAT_NOT_RECOGNIZED" -> context.getString(R.string.error_format_not_recognized)
+                        "NO_TRANSACTIONS" -> context.getString(R.string.error_no_transactions)
+                        else -> error.message ?: context.getString(R.string.error_unknown)
+                    }
+                    _state.value = ImportState.Error(message)
                 }
         }
     }
@@ -73,4 +90,15 @@ class ImportViewModel(
     fun resetState() {
         _state.value = ImportState.Idle
     }
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+                val application = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]!!
+                return ImportViewModel(application) as T
+            }
+        }
+    }
+
 }
