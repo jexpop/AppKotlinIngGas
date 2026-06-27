@@ -29,8 +29,13 @@ class ImportCsvUseCase(
             val periodMonth = periodRepository.getOrCreateMonth(yearMonth).getOrThrow()
             periodRepository.setCurrentMonth(periodMonth.id!!).getOrThrow()
 
-            // Borrar transacciones existentes del mismo mes, banco y tipo
-            repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
+            // Borrar transacciones existentes según tipo
+            if (paymentType == "C") {
+                val creditMonth = transactions.first().creditMonth ?: yearMonth
+                repository.deleteByCreditMonthAndBank(creditMonth, bankId).getOrThrow()
+            } else {
+                repository.deleteByMonthBankAndType(yearMonth, bankId, paymentType).getOrThrow()
+            }
 
             // Asignar period_month_id y ordenar por fecha
             val transactionsWithPeriod = transactions

@@ -80,6 +80,7 @@ class ImportViewModel(
                     val message = when (error.message) {
                         "FORMAT_NOT_RECOGNIZED" -> context.getString(R.string.error_format_not_recognized)
                         "NO_TRANSACTIONS" -> context.getString(R.string.error_no_transactions)
+                        "MULTIPLE_MONTHS" -> context.getString(R.string.error_multiple_months)
                         else -> error.message ?: context.getString(R.string.error_unknown)
                     }
                     _state.value = ImportState.Error(message)

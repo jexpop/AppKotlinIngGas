@@ -22,7 +22,7 @@ class BankAAccountParser : CsvParserStrategy {
         val amountIndex = headers.indexOf("amount")
         val balanceIndex = headers.indexOf("balance")
 
-        return lines.drop(headerIndex + 1)
+        val transactions = lines.drop(headerIndex + 1)
             .filter { it.isNotBlank() && !it.all { c -> c == ';' } }
             .mapNotNull { line ->
                 val cols = line.split(";")
@@ -39,6 +39,14 @@ class BankAAccountParser : CsvParserStrategy {
                     )
                 }.getOrNull()
             }
+
+        // Validar que todas las transacciones son del mismo mes
+        val months = transactions.map { it.transactionDate.substring(0, 7) }.distinct()
+        if (months.size > 1) {
+            throw Exception("MULTIPLE_MONTHS")
+        }
+
+        return transactions
     }
 
     private fun parseAmount(value: String): Double {
@@ -52,4 +60,5 @@ class BankAAccountParser : CsvParserStrategy {
         val parts = value.split("/")
         return "${parts[2]}-${parts[1]}-${parts[0]}"
     }
+
 }

@@ -35,6 +35,21 @@ class TransactionRepository {
         }
     }
 
+    suspend fun deleteByCreditMonthAndBank(
+        creditMonth: String,
+        bankId: Int
+    ): Result<Unit> {
+        return runCatching {
+            supabase.from("transaction").delete {
+                filter {
+                    eq("credit_month", creditMonth)
+                    eq("bank_id", bankId)
+                    eq("payment_type", "C")
+                }
+            }
+        }
+    }
+
     suspend fun getTransactionsByMonth(month: String): Result<List<Transaction>> {
         return runCatching {
             val year = month.substring(0, 4)

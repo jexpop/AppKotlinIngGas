@@ -29,4 +29,5 @@
     <string name="error_loading_banks">Error cargando bancos: %1$s</string>
     <string name="error_format_not_recognized">Formato de fichero no reconocido</string>
     <string name="error_prefix">Error: %1$s</string>
+    <string name="error_multiple_months">El fichero contiene más de un mes. Por favor importa un mes único.</string>
 </resources>
