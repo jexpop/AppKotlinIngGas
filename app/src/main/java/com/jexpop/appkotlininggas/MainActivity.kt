@@ -11,8 +11,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.jexpop.appkotlininggas.data.repository.AuthRepository
+import com.jexpop.appkotlininggas.ui.AppNavigation
 import com.jexpop.appkotlininggas.ui.screens.LoginScreen
-import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
 import com.jexpop.appkotlininggas.ui.theme.AppKotlinIngGasTheme
 import io.github.jan.supabase.auth.handleDeeplinks
 
@@ -22,10 +22,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Maneja el deep link de vuelta desde Google OAuth
         supabase.handleDeeplinks(intent)
-
         enableEdgeToEdge()
         setContent {
             AppKotlinIngGasTheme {
@@ -33,12 +30,10 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(authRepository.isAuthenticated())
                 }
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    if (isAuthenticated) {
-                        ImportScreen(
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    } else {
+                if (isAuthenticated) {
+                    AppNavigation()
+                } else {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         LoginScreen(
                             modifier = Modifier.padding(innerPadding),
                             onLoginSuccess = { isAuthenticated = true }

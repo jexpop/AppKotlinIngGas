@@ -30,4 +30,20 @@
     <string name="error_format_not_recognized">Formato de fichero no reconocido</string>
     <string name="error_prefix">Error: %1$s</string>
     <string name="error_multiple_months">El fichero contiene más de un mes. Por favor importa un mes único.</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_transactions">Movimientos</string>
+    <string name="nav_categories">Categorías</string>
+    <string name="nav_banks">Bancos</string>
+    <string name="nav_import">Importar</string>
+    <string name="nav_settings">Ajustes</string>
+
+    <!-- Placeholders -->
+    <string name="placeholder_home">Home</string>
+    <string name="placeholder_transactions">Transacciones</string>
+    <string name="placeholder_categories">Categorías</string>
+    <string name="placeholder_banks">Bancos</string>
+    <string name="placeholder_settings">Ajustes</string>
+
 </resources>

@@ -9,5 +9,6 @@ data class CategoryGroup(
     @SerialName("parent_id") val parentId: Int? = null,
     val description: String,
     val periodicity: String? = null,
-    @SerialName("sort_order") val sortOrder: String? = null
+    @SerialName("sort_order") val sortOrder: String? = null,
+    @SerialName("flow_type") val flowType: String? = null
 )
