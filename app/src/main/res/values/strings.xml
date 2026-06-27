@@ -46,4 +46,27 @@
     <string name="placeholder_banks">Bancos</string>
     <string name="placeholder_settings">Ajustes</string>
 
+    <!-- Bancos -->
+    <string name="banks_empty">No hay bancos configurados</string>
+    <string name="banks_add">Añadir banco</string>
+    <string name="banks_name">Nombre</string>
+    <string name="banks_description">Descripción</string>
+
+    <!-- Diálogos -->
+    <string name="dialog_confirm">Confirmar</string>
+    <string name="dialog_cancel">Cancelar</string>
+
+    <!-- Transacciones -->
+    <string name="transactions_filters">Filtros</string>
+    <string name="transactions_empty">No hay transacciones</string>
+    <string name="transactions_income">Ingresos</string>
+    <string name="transactions_expense">Gastos</string>
+    <string name="transactions_balance">Balance</string>
+    <string name="transactions_month">Mes</string>
+    <string name="transactions_all_months">Todos los meses</string>
+    <string name="transactions_all_banks">Todos los bancos</string>
+    <string name="transactions_all">Todos</string>
+    <string name="transactions_account">Cuenta</string>
+    <string name="transactions_credit">Tarjeta</string>
+
 </resources>

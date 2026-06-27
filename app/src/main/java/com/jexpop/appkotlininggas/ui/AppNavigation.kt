@@ -19,6 +19,8 @@ import androidx.navigation.compose.rememberNavController
 import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
 import androidx.compose.ui.unit.sp
+import com.jexpop.appkotlininggas.ui.screens.banks.BanksScreen
+import com.jexpop.appkotlininggas.ui.screens.transactions.TransactionsScreen
 
 @Composable
 fun AppNavigation() {
@@ -74,13 +76,13 @@ fun AppNavigation() {
                 Text(stringResource(R.string.placeholder_home))
             }
             composable(Screen.Transactions.route) {
-                Text(stringResource(R.string.placeholder_transactions))
+                TransactionsScreen()
             }
             composable(Screen.Categories.route) {
                 Text(stringResource(R.string.placeholder_categories))
             }
             composable(Screen.Banks.route) {
-                Text(stringResource(R.string.placeholder_banks))
+                BanksScreen()
             }
             composable(Screen.Import.route) {
                 ImportScreen()

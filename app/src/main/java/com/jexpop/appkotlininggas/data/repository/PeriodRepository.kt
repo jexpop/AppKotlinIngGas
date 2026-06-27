@@ -4,6 +4,7 @@ import com.jexpop.appkotlininggas.data.model.Period
 import com.jexpop.appkotlininggas.data.model.PeriodMonth
 import com.jexpop.appkotlininggas.supabase
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class PeriodRepository {
 
@@ -52,4 +53,28 @@ class PeriodRepository {
             android.util.Log.d("PERIOD", "setCurrentMonth completado")
         }
     }
+
+    suspend fun getCurrentMonth(): Result<String?> {
+        return runCatching {
+            supabase.from("period_month")
+                .select {
+                    filter { eq("current", true) }
+                }
+                .decodeList<PeriodMonth>()
+                .firstOrNull()?.month
+        }
+    }
+
+    suspend fun getAllMonths(): Result<List<String>> {
+        return runCatching {
+            supabase.from("period_month")
+                .select {
+                    filter { eq("active", true) }
+                    order("month", Order.DESCENDING)
+                }
+                .decodeList<PeriodMonth>()
+                .map { it.month }
+        }
+    }
+
 }
