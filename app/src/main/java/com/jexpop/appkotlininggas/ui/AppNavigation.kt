@@ -21,6 +21,7 @@ import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
 import androidx.compose.ui.unit.sp
 import com.jexpop.appkotlininggas.ui.screens.banks.BanksScreen
 import com.jexpop.appkotlininggas.ui.screens.transactions.TransactionsScreen
+import com.jexpop.appkotlininggas.ui.screens.categories.CategoriesScreen
 
 @Composable
 fun AppNavigation() {
@@ -79,7 +80,7 @@ fun AppNavigation() {
                 TransactionsScreen()
             }
             composable(Screen.Categories.route) {
-                Text(stringResource(R.string.placeholder_categories))
+                CategoriesScreen()
             }
             composable(Screen.Banks.route) {
                 BanksScreen()

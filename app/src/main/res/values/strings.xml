@@ -69,4 +69,20 @@
     <string name="transactions_account">Cuenta</string>
     <string name="transactions_credit">Tarjeta</string>
 
+    <!-- Categorías -->
+    <string name="categories_groups">Grupos</string>
+    <string name="categories_rules">Reglas</string>
+    <string name="categories_auto_rules">Automáticas</string>
+    <string name="categories_manual_rules">Manuales</string>
+    <string name="categories_delete_error">No se puede eliminar, tiene transacciones asignadas</string>
+    <string name="categories_add_group">Añadir grupo</string>
+    <string name="categories_edit_group">Editar grupo</string>
+    <string name="categories_add_rule">Añadir regla</string>
+    <string name="categories_edit_rule">Editar regla</string>
+    <string name="categories_add_exception">Añadir excepción</string>
+    <string name="categories_edit_exception">Editar excepción</string>
+    <string name="categories_empty">No hay categorías</string>
+    <string name="categories_rules_empty">No hay reglas</string>
+    <string name="categories_exceptions_empty">No hay excepciones</string>
+
 </resources>
