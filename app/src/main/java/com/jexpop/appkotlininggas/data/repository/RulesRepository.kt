@@ -1,10 +1,9 @@
 package com.jexpop.appkotlininggas.data.repository
 
-import com.jexpop.appkotlininggas.data.repository.CategorizationException
-import com.jexpop.appkotlininggas.data.repository.CategorizationRule
 import com.jexpop.appkotlininggas.supabase
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import com.jexpop.appkotlininggas.data.model.RuleType
 
 class RulesRepository {
 
@@ -83,4 +82,13 @@ class RulesRepository {
             }
         }
     }
+
+    suspend fun getAllRuleTypes(): Result<List<RuleType>> {
+        return runCatching {
+            supabase.from("rule_type")
+                .select()
+                .decodeList<RuleType>()
+        }
+    }
+
 }

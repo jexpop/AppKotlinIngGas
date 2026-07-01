@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import com.jexpop.appkotlininggas.data.model.Periodicity
 import com.jexpop.appkotlininggas.data.repository.PeriodicityRepository
+import com.jexpop.appkotlininggas.data.model.RuleType
 
 sealed class CategoriesState {
     object Idle : CategoriesState()
@@ -50,6 +51,9 @@ class CategoriesViewModel(
     private val _periodicities = MutableStateFlow<List<Periodicity>>(emptyList())
     val periodicities: StateFlow<List<Periodicity>> = _periodicities
 
+    private val _ruleTypes = MutableStateFlow<List<RuleType>>(emptyList())
+    val ruleTypes: StateFlow<List<RuleType>> = _ruleTypes
+
     init {
         loadAll()
     }
@@ -68,6 +72,9 @@ class CategoriesViewModel(
                 .onFailure { _state.value = CategoriesState.Error(it.message ?: context.getString(R.string.error_unknown)) }
             periodicityRepository.getAll()
                 .onSuccess { _periodicities.value = it }
+                .onFailure { _state.value = CategoriesState.Error(it.message ?: context.getString(R.string.error_unknown)) }
+            rulesRepository.getAllRuleTypes()
+                .onSuccess { _ruleTypes.value = it }
                 .onFailure { _state.value = CategoriesState.Error(it.message ?: context.getString(R.string.error_unknown)) }
             _state.value = CategoriesState.Idle
         }

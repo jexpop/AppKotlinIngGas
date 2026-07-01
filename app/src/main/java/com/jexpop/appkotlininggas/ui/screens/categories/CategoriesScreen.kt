@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.data.model.CategoryGroup
 import com.jexpop.appkotlininggas.data.model.Periodicity
+import com.jexpop.appkotlininggas.data.model.RuleType
 import com.jexpop.appkotlininggas.data.repository.CategorizationException
 import com.jexpop.appkotlininggas.data.repository.CategorizationRule
 
@@ -37,6 +38,7 @@ fun CategoriesScreen(
     val exceptions by viewModel.exceptions.collectAsState()
     val state by viewModel.state.collectAsState()
     val periodicities by viewModel.periodicities.collectAsState()
+    val ruleTypes by viewModel.ruleTypes.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -68,6 +70,7 @@ fun CategoriesScreen(
                 rules = rules,
                 exceptions = exceptions,
                 groups = groups,
+                ruleTypes = ruleTypes,
                 onAddRule = { viewModel.addRule(it) },
                 onEditRule = { viewModel.updateRule(it) },
                 onDeleteRule = { viewModel.deleteRule(it) },
@@ -434,6 +437,7 @@ fun RulesTab(
     rules: List<CategorizationRule>,
     exceptions: List<CategorizationException>,
     groups: List<CategoryGroup>,
+    ruleTypes: List<RuleType>,
     onAddRule: (CategorizationRule) -> Unit,
     onEditRule: (CategorizationRule) -> Unit,
     onDeleteRule: (Int) -> Unit,
@@ -462,6 +466,7 @@ fun RulesTab(
             0 -> AutoRulesTab(
                 rules = rules,
                 groups = groups,
+                ruleTypes = ruleTypes,
                 onAdd = onAddRule,
                 onEdit = onEditRule,
                 onDelete = onDeleteRule
@@ -481,6 +486,7 @@ fun RulesTab(
 fun AutoRulesTab(
     rules: List<CategorizationRule>,
     groups: List<CategoryGroup>,
+    ruleTypes: List<RuleType>,
     onAdd: (CategorizationRule) -> Unit,
     onEdit: (CategorizationRule) -> Unit,
     onDelete: (Int) -> Unit
@@ -506,6 +512,7 @@ fun AutoRulesTab(
                     RuleItem(
                         rule = rule,
                         groups = groups,
+                        ruleTypes = ruleTypes,
                         onEdit = {
                             editingRule = it
                             showDialog = true
@@ -533,6 +540,7 @@ fun AutoRulesTab(
         RuleDialog(
             rule = editingRule,
             groups = groups,
+            ruleTypes = ruleTypes,
             onConfirm = { rule ->
                 if (editingRule == null) onAdd(rule) else onEdit(rule)
                 showDialog = false
@@ -550,10 +558,12 @@ fun AutoRulesTab(
 fun RuleItem(
     rule: CategorizationRule,
     groups: List<CategoryGroup>,
+    ruleTypes: List<RuleType>,
     onEdit: (CategorizationRule) -> Unit,
     onDelete: () -> Unit
 ) {
     val groupName = groups.firstOrNull { it.id == rule.group_id }?.description ?: "?"
+    val ruleTypeName = ruleTypes.firstOrNull { it.id == rule.rule_type }?.description ?: "Tipo ${rule.rule_type}"
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
@@ -567,7 +577,7 @@ fun RuleItem(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Tipo ${rule.rule_type} → $groupName",
+                    text = "$ruleTypeName → $groupName",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -597,6 +607,7 @@ fun RuleItem(
 fun RuleDialog(
     rule: CategorizationRule?,
     groups: List<CategoryGroup>,
+    ruleTypes: List<RuleType>,
     onConfirm: (CategorizationRule) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -607,6 +618,7 @@ fun RuleDialog(
     var value3 by remember { mutableStateOf(rule?.value3 ?: "") }
     var value4 by remember { mutableStateOf(rule?.value4 ?: "") }
     var showGroupPicker by remember { mutableStateOf(false) }
+    var showRuleTypePicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -620,14 +632,19 @@ fun RuleDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    listOf(1, 2, 4, 5, 6, 7, 99).forEach { type ->
-                        FilterChip(
-                            selected = ruleType == type,
-                            onClick = { ruleType = type },
-                            label = { Text(type.toString()) }
-                        )
-                    }
+                Text(
+                    text = "Tipo de regla",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedButton(
+                    onClick = { showRuleTypePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = ruleTypes.firstOrNull { it.id == ruleType }?.description
+                            ?: "Selecciona tipo"
+                    )
                 }
 
                 Text(
@@ -707,6 +724,31 @@ fun RuleDialog(
             }
         }
     )
+
+    if (showRuleTypePicker) {
+        AlertDialog(
+            onDismissRequest = { showRuleTypePicker = false },
+            title = { Text("Selecciona tipo de regla") },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    ruleTypes.forEach { rt ->
+                        TextButton(
+                            onClick = {
+                                ruleType = rt.id
+                                showRuleTypePicker = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(rt.description)
+                        }
+                    }
+                }
+            },
+            confirmButton = {}
+        )
+    }
 
     if (showGroupPicker) {
         AlertDialog(
