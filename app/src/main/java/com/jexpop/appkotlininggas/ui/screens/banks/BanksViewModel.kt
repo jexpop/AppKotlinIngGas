@@ -65,9 +65,9 @@ class BanksViewModel(
         }
     }
 
-    fun addBank(name: String, description: String) {
+    fun addBank(name: String, code: String, description: String) {
         viewModelScope.launch {
-            bankRepository.insertBank(Bank(name = name, description = description))
+            bankRepository.insertBank(Bank(name = name, code = code, description = description))
                 .onSuccess { loadBanks() }
                 .onFailure {
                     _state.value = BanksState.Error(

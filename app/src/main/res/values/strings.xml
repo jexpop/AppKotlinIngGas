@@ -51,6 +51,7 @@
     <string name="banks_add">Añadir banco</string>
     <string name="banks_name">Nombre</string>
     <string name="banks_description">Descripción</string>
+    <string name="banks_code">Código</string>
 
     <!-- Diálogos -->
     <string name="dialog_confirm">Confirmar</string>
@@ -84,5 +85,21 @@
     <string name="categories_empty">No hay categorías</string>
     <string name="categories_rules_empty">No hay reglas</string>
     <string name="categories_exceptions_empty">No hay excepciones</string>
+
+    <!-- Ajustes -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_user">Usuario</string>
+    <string name="settings_encryption">Cifrado</string>
+    <string name="settings_encryption_password">Contraseña de cifrado</string>
+    <string name="settings_encryption_password_hint">Introduce una contraseña segura</string>
+    <string name="settings_encryption_password_confirm">Confirma la contraseña</string>
+    <string name="settings_encryption_password_saved">Contraseña guardada correctamente</string>
+    <string name="settings_encryption_password_mismatch">Las contraseñas no coinciden</string>
+    <string name="settings_encryption_password_empty">La contraseña no puede estar vacía</string>
+    <string name="settings_encryption_configured">Cifrado configurado</string>
+    <string name="settings_encryption_not_configured">Cifrado no configurado</string>
+    <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_logout_confirm">¿Estás seguro de que quieres cerrar sesión?</string>
+    <string name="settings_app_version">Versión</string>
 
 </resources>

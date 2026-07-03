@@ -6,10 +6,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -17,14 +17,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jexpop.appkotlininggas.R
-import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
-import androidx.compose.ui.unit.sp
 import com.jexpop.appkotlininggas.ui.screens.banks.BanksScreen
-import com.jexpop.appkotlininggas.ui.screens.transactions.TransactionsScreen
 import com.jexpop.appkotlininggas.ui.screens.categories.CategoriesScreen
+import com.jexpop.appkotlininggas.ui.screens.importcsv.ImportScreen
+import com.jexpop.appkotlininggas.ui.screens.settings.SettingsScreen
+import com.jexpop.appkotlininggas.ui.screens.transactions.TransactionsScreen
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    onLogout: () -> Unit
+) {
     val navController = rememberNavController()
 
     val screenLabels = mapOf(
@@ -89,7 +91,7 @@ fun AppNavigation() {
                 ImportScreen()
             }
             composable(Screen.Settings.route) {
-                Text(stringResource(R.string.placeholder_settings))
+                SettingsScreen(onLogout = onLogout)
             }
         }
     }

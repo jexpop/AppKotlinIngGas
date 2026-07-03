@@ -65,8 +65,8 @@ fun BanksScreen(
 
     if (showDialog) {
         AddBankDialog(
-            onConfirm = { name, description ->
-                viewModel.addBank(name, description)
+            onConfirm = { name, code, description ->
+                viewModel.addBank(name, code, description)
                 showDialog = false
             },
             onDismiss = { showDialog = false }
@@ -117,10 +117,11 @@ fun BankItem(
 
 @Composable
 fun AddBankDialog(
-    onConfirm: (String, String) -> Unit,
+    onConfirm: (String, String, String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -136,6 +137,13 @@ fun AddBankDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    label = { Text(stringResource(R.string.banks_code)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text(stringResource(R.string.banks_description)) },
@@ -146,8 +154,8 @@ fun AddBankDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(name, description) },
-                enabled = name.isNotBlank()
+                onClick = { onConfirm(name, code, description) },
+                enabled = name.isNotBlank() && code.isNotBlank()
             ) {
                 Text(stringResource(R.string.dialog_confirm))
             }

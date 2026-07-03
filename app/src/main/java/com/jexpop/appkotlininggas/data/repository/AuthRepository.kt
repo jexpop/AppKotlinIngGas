@@ -1,4 +1,3 @@
-
 package com.jexpop.appkotlininggas.data.repository
 
 import android.content.Context
@@ -27,13 +26,11 @@ class AuthRepository {
         }
     }
 
-    suspend fun signOut(): Result<Unit> {
-        return runCatching {
-            supabase.auth.signOut()
-        }
-    }
-
     fun isAuthenticated(): Boolean {
         return supabase.auth.currentSessionOrNull() != null
+    }
+
+    fun getCurrentUserEmail(): String? {
+        return supabase.auth.currentSessionOrNull()?.user?.email
     }
 }

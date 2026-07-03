@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (isAuthenticated) {
-                    AppNavigation()
+                    AppNavigation(onLogout = { isAuthenticated = false })
                 } else {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         LoginScreen(

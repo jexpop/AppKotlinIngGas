@@ -22,6 +22,7 @@ android {
         )
         buildConfigField("String", "SUPABASE_URL", "\"${properties["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${properties["SUPABASE_KEY"]}\"")
+        buildConfigField("String", "ADMIN_EMAIL", "\"${properties["ADMIN_EMAIL"]}\"")
     }
 
     buildTypes {
@@ -93,5 +94,8 @@ dependencies {
 
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
+
+    // Seguridad para almacenamiento cifrado
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
 }
