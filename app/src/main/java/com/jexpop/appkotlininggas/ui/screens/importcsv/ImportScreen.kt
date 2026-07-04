@@ -34,7 +34,7 @@ fun ImportScreen(
                 .openInputStream(it)
                 ?.bufferedReader()
                 ?.readText() ?: return@let
-            viewModel.importCsv(content)
+            viewModel.importCsv(content, context)
         }
     }
 

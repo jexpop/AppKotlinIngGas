@@ -102,4 +102,11 @@
     <string name="settings_logout_confirm">¿Estás seguro de que quieres cerrar sesión?</string>
     <string name="settings_app_version">Versión</string>
 
+    <!-- Drive -->
+    <string name="settings_drive">Google Drive</string>
+    <string name="settings_drive_connected">Conectado</string>
+    <string name="settings_drive_not_connected">No conectado</string>
+    <string name="settings_drive_connect">Conectar</string>
+    <string name="settings_drive_disconnect">Desconectar</string>
+
 </resources>

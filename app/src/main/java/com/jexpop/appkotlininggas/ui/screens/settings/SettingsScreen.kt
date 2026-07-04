@@ -10,6 +10,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jexpop.appkotlininggas.R
+import androidx.activity.result.contract.ActivityResultContracts
+import com.jexpop.appkotlininggas.data.DriveAuthManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
 
 @Composable
 fun SettingsScreen(
@@ -23,6 +27,20 @@ fun SettingsScreen(
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordWarning by remember { mutableStateOf(false) }
+
+    val isDriveConnected by viewModel.isDriveConnected.collectAsState()
+    val context = LocalContext.current
+    val driveSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            viewModel.checkDriveConnection(context)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.checkDriveConnection(context)
+    }
 
     LaunchedEffect(state) {
         if (state is SettingsState.Success) {
@@ -110,6 +128,53 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+        }
+
+        HorizontalDivider()
+
+        Text(
+            text = stringResource(R.string.settings_drive),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_drive),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = stringResource(
+                            if (isDriveConnected) R.string.settings_drive_connected
+                            else R.string.settings_drive_not_connected
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isDriveConnected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.error
+                    )
+                }
+                TextButton(
+                    onClick = {
+                        if (isDriveConnected) {
+                            viewModel.disconnectDrive(context)
+                        } else {
+                            driveSignInLauncher.launch(DriveAuthManager.getSignInIntent(context))
+                        }
+                    }
+                ) {
+                    Text(
+                        if (isDriveConnected) stringResource(R.string.settings_drive_disconnect)
+                        else stringResource(R.string.settings_drive_connect)
+                    )
+                }
             }
         }
 

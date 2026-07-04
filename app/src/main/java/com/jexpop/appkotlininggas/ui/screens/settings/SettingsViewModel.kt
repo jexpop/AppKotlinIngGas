@@ -14,6 +14,7 @@ import com.jexpop.appkotlininggas.supabase
 import io.github.jan.supabase.auth.auth
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import com.jexpop.appkotlininggas.data.DriveAuthManager
 
 sealed class SettingsState {
     object Idle : SettingsState()
@@ -36,6 +37,10 @@ class SettingsViewModel(
 
     private val _userEmail = MutableStateFlow<String?>(null)
     val userEmail: StateFlow<String?> = _userEmail
+
+    private val _isDriveConnected = MutableStateFlow(false)
+    val isDriveConnected: StateFlow<Boolean> = _isDriveConnected
+
 
     init {
         _isEncryptionConfigured.value = EncryptionManager.hasPassword(context)
@@ -83,6 +88,16 @@ class SettingsViewModel(
         return _userEmail.value == BuildConfig.ADMIN_EMAIL
     }
 
+
+    fun checkDriveConnection(context: android.content.Context) {
+        _isDriveConnected.value = DriveAuthManager.isSignedIn(context)
+    }
+
+    fun disconnectDrive(context: android.content.Context) {
+        DriveAuthManager.signOut(context)
+        _isDriveConnected.value = false
+    }
+
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
@@ -92,4 +107,5 @@ class SettingsViewModel(
             }
         }
     }
+
 }

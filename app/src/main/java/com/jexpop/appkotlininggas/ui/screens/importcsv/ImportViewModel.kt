@@ -63,7 +63,7 @@ class ImportViewModel(
         _selectedBank.value = bank
     }
 
-    fun importCsv(content: String) {
+    fun importCsv(content: String, context: android.content.Context) {
         val bankId = _selectedBank.value?.id ?: run {
             _state.value = ImportState.Error(
                 context.getString(R.string.error_no_bank_selected)
@@ -72,7 +72,7 @@ class ImportViewModel(
         }
         viewModelScope.launch {
             _state.value = ImportState.Loading
-            importCsvUseCase.execute(content, bankId)
+            importCsvUseCase.execute(content, bankId, context)
                 .onSuccess { count ->
                     _state.value = ImportState.Success(count)
                 }

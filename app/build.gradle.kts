@@ -45,6 +45,16 @@ android {
         compose = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += "META-INF/DEPENDENCIES"
+            excludes += "META-INF/LICENSE"
+            excludes += "META-INF/LICENSE.txt"
+            excludes += "META-INF/NOTICE"
+            excludes += "META-INF/NOTICE.txt"
+        }
+    }
 }
 
 dependencies {
@@ -73,6 +83,11 @@ dependencies {
     // Google Auth para Supabase
     implementation("io.github.jan-tennert.supabase:auth-kt")
     implementation("androidx.browser:browser:1.8.0")
+
+    // Google Drive API
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
 
     // Motor HTTP requerido por Supabase
     implementation("io.ktor:ktor-client-android:3.1.3")
