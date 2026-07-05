@@ -109,4 +109,18 @@
     <string name="settings_drive_connect">Conectar</string>
     <string name="settings_drive_disconnect">Desconectar</string>
 
+    <!-- GitHub -->
+    <string name="settings_github">GitHub</string>
+    <string name="settings_github_token">Token de acceso</string>
+    <string name="settings_github_token_expiry">Fecha de expiración</string>
+    <string name="settings_github_repo_backup">Repositorio de backups</string>
+    <string name="settings_github_repo_public">Repositorio público</string>
+    <string name="settings_github_username">Usuario de GitHub</string>
+    <string name="settings_github_token_ok">Token válido</string>
+    <string name="settings_github_token_warning">Expira en %1$d días</string>
+    <string name="settings_github_token_expired">Token expirado</string>
+    <string name="settings_github_token_unknown">Fecha desconocida</string>
+    <string name="settings_github_renewal_title">Cómo renovar el token</string>
+    <string name="settings_github_renewal_steps">1. Ve a github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens\n2. Genera un nuevo token con acceso a tu repositorio de backups (Contents: Read and write)\n3. En el repositorio público, ve a Settings → Secrets → Actions → PAT → actualiza el valor\n4. Actualiza el token y la fecha de expiración aquí</string>
+
 </resources>

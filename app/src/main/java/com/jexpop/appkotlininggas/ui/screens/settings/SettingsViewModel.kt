@@ -15,6 +15,8 @@ import io.github.jan.supabase.auth.auth
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import com.jexpop.appkotlininggas.data.DriveAuthManager
+import com.jexpop.appkotlininggas.data.repository.AppParamRepository
+import com.jexpop.appkotlininggas.R
 
 sealed class SettingsState {
     object Idle : SettingsState()
@@ -42,9 +44,81 @@ class SettingsViewModel(
     val isDriveConnected: StateFlow<Boolean> = _isDriveConnected
 
 
+    private val _tokenExpiry = MutableStateFlow<String?>(null)
+    val tokenExpiry: StateFlow<String?> = _tokenExpiry
+
+    private val _tokenExpiryWarning = MutableStateFlow<TokenExpiryStatus>(TokenExpiryStatus.Ok)
+    val tokenExpiryWarning: StateFlow<TokenExpiryStatus> = _tokenExpiryWarning
+
+    private val appParamRepository = AppParamRepository()
+
+    private val _githubToken = MutableStateFlow<String?>(null)
+    val githubToken: StateFlow<String?> = _githubToken
+
+    private val _githubRepoBackup = MutableStateFlow<String?>(null)
+    val githubRepoBackup: StateFlow<String?> = _githubRepoBackup
+
+    private val _githubRepoPublic = MutableStateFlow<String?>(null)
+    val githubRepoPublic: StateFlow<String?> = _githubRepoPublic
+
+    private val _githubUsername = MutableStateFlow<String?>(null)
+    val githubUsername: StateFlow<String?> = _githubUsername
+
     init {
         _isEncryptionConfigured.value = EncryptionManager.hasPassword(context)
         _userEmail.value = authRepository.getCurrentUserEmail()
+        loadTokenExpiry()
+    }
+
+    private fun loadTokenExpiry() {
+        viewModelScope.launch {
+            appParamRepository.getValue("GITHUB", "TOKEN_EXPIRY")
+                .onSuccess { value ->
+                    _tokenExpiry.value = value
+                    _tokenExpiryWarning.value = calculateExpiryStatus(value)
+                }
+            appParamRepository.getValue("GITHUB", "TOKEN")
+                .onSuccess { _githubToken.value = it }
+            appParamRepository.getValue("GITHUB", "REPO_BACKUP")
+                .onSuccess { _githubRepoBackup.value = it }
+            appParamRepository.getValue("GITHUB", "REPO_PUBLIC")
+                .onSuccess { _githubRepoPublic.value = it }
+            appParamRepository.getValue("GITHUB", "USERNAME")
+                .onSuccess { _githubUsername.value = it }
+        }
+    }
+
+    fun updateTokenExpiry(date: String) {
+        viewModelScope.launch {
+            appParamRepository.setValue("GITHUB", "TOKEN_EXPIRY", date)
+                .onSuccess {
+                    _tokenExpiry.value = date
+                    _tokenExpiryWarning.value = calculateExpiryStatus(date)
+                    _state.value = SettingsState.Success
+                }
+                .onFailure {
+                    _state.value = SettingsState.Error(it.message ?: context.getString(R.string.error_unknown))
+                }
+        }
+    }
+
+    private fun calculateExpiryStatus(date: String?): TokenExpiryStatus {
+        if (date == null) return TokenExpiryStatus.Unknown
+        return try {
+            val parts = date.split("-")
+            val expiry = java.util.Calendar.getInstance().apply {
+                set(parts[0].toInt(), parts[1].toInt() - 1, parts[2].toInt())
+            }
+            val today = java.util.Calendar.getInstance()
+            val daysLeft = ((expiry.timeInMillis - today.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
+            when {
+                daysLeft < 0 -> TokenExpiryStatus.Expired
+                daysLeft < 30 -> TokenExpiryStatus.Warning(daysLeft)
+                else -> TokenExpiryStatus.Ok
+            }
+        } catch (e: Exception) {
+            TokenExpiryStatus.Unknown
+        }
     }
 
     fun saveEncryptionPassword(password: String, confirmPassword: String): Boolean {
@@ -96,6 +170,58 @@ class SettingsViewModel(
     fun disconnectDrive(context: android.content.Context) {
         DriveAuthManager.signOut(context)
         _isDriveConnected.value = false
+    }
+
+    fun updateGithubToken(token: String) {
+        viewModelScope.launch {
+            appParamRepository.setValue("GITHUB", "TOKEN", token)
+                .onSuccess {
+                    _githubToken.value = token
+                    _state.value = SettingsState.Success
+                }
+                .onFailure {
+                    _state.value = SettingsState.Error(it.message ?: context.getString(R.string.error_unknown))
+                }
+        }
+    }
+
+    fun updateGithubRepoBackup(repo: String) {
+        viewModelScope.launch {
+            appParamRepository.setValue("GITHUB", "REPO_BACKUP", repo)
+                .onSuccess {
+                    _githubRepoBackup.value = repo
+                    _state.value = SettingsState.Success
+                }
+                .onFailure {
+                    _state.value = SettingsState.Error(it.message ?: context.getString(R.string.error_unknown))
+                }
+        }
+    }
+
+    fun updateGithubRepoPublic(repo: String) {
+        viewModelScope.launch {
+            appParamRepository.setValue("GITHUB", "REPO_PUBLIC", repo)
+                .onSuccess {
+                    _githubRepoPublic.value = repo
+                    _state.value = SettingsState.Success
+                }
+                .onFailure {
+                    _state.value = SettingsState.Error(it.message ?: context.getString(R.string.error_unknown))
+                }
+        }
+    }
+
+    fun updateGithubUsername(username: String) {
+        viewModelScope.launch {
+            appParamRepository.setValue("GITHUB", "USERNAME", username)
+                .onSuccess {
+                    _githubUsername.value = username
+                    _state.value = SettingsState.Success
+                }
+                .onFailure {
+                    _state.value = SettingsState.Error(it.message ?: context.getString(R.string.error_unknown))
+                }
+        }
     }
 
     companion object {

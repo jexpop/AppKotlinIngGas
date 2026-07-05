@@ -14,6 +14,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.jexpop.appkotlininggas.data.DriveAuthManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
 
 @Composable
 fun SettingsScreen(
@@ -37,6 +40,17 @@ fun SettingsScreen(
             viewModel.checkDriveConnection(context)
         }
     }
+
+    //Github
+    val tokenExpiry by viewModel.tokenExpiry.collectAsState()
+    val tokenExpiryWarning by viewModel.tokenExpiryWarning.collectAsState()
+    val githubToken by viewModel.githubToken.collectAsState()
+    val githubRepoBackup by viewModel.githubRepoBackup.collectAsState()
+    val githubRepoPublic by viewModel.githubRepoPublic.collectAsState()
+    val githubUsername by viewModel.githubUsername.collectAsState()
+    var showGithubDialog by remember { mutableStateOf(false) }
+    var showRenewalSteps by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         viewModel.checkDriveConnection(context)
@@ -178,6 +192,75 @@ fun SettingsScreen(
             }
         }
 
+        // Github
+        HorizontalDivider()
+
+        Text(
+            text = stringResource(R.string.settings_github),
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        // Estado del token
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.settings_github_token),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = when (val status = tokenExpiryWarning) {
+                                is TokenExpiryStatus.Ok -> stringResource(R.string.settings_github_token_ok)
+                                is TokenExpiryStatus.Expired -> stringResource(R.string.settings_github_token_expired)
+                                is TokenExpiryStatus.Warning -> stringResource(R.string.settings_github_token_warning, status.daysLeft)
+                                is TokenExpiryStatus.Unknown -> stringResource(R.string.settings_github_token_unknown)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = when (tokenExpiryWarning) {
+                                is TokenExpiryStatus.Ok -> MaterialTheme.colorScheme.primary
+                                is TokenExpiryStatus.Expired -> MaterialTheme.colorScheme.error
+                                is TokenExpiryStatus.Warning -> MaterialTheme.colorScheme.tertiary
+                                is TokenExpiryStatus.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
+                    }
+                    TextButton(onClick = { showGithubDialog = true }) {
+                        Text("Editar")
+                    }
+                }
+
+                // Instrucciones de renovación
+                TextButton(
+                    onClick = { showRenewalSteps = !showRenewalSteps },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_github_renewal_title),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (showRenewalSteps) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 200.dp)
+                            .verticalScroll(rememberScrollState())
+                            .padding(top = 8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_github_renewal_steps),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
         HorizontalDivider()
 
         // Cerrar sesión
@@ -261,6 +344,27 @@ fun SettingsScreen(
             }
         )
     }
+
+    // Diálogo edición de Github
+    if (showGithubDialog) {
+        GithubDialog(
+            token = githubToken ?: "",
+            expiry = tokenExpiry ?: "",
+            repoBackup = githubRepoBackup ?: "",
+            repoPublic = githubRepoPublic ?: "",
+            username = githubUsername ?: "",
+            onConfirm = { token, expiry, repoBackup, repoPublic, username ->
+                if (token.isNotBlank()) viewModel.updateGithubToken(token)
+                if (expiry.isNotBlank()) viewModel.updateTokenExpiry(expiry)
+                if (repoBackup.isNotBlank()) viewModel.updateGithubRepoBackup(repoBackup)
+                if (repoPublic.isNotBlank()) viewModel.updateGithubRepoPublic(repoPublic)
+                if (username.isNotBlank()) viewModel.updateGithubUsername(username)
+                showGithubDialog = false
+            },
+            onDismiss = { showGithubDialog = false }
+        )
+    }
+
 }
 
 @Composable
@@ -298,6 +402,167 @@ fun PasswordDialog(
             TextButton(
                 onClick = { onConfirm(password, confirmPassword) },
                 enabled = password.isNotBlank() && confirmPassword.isNotBlank()
+            ) {
+                Text(stringResource(R.string.dialog_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        }
+    )
+
+    // Github
+    @Composable
+    fun GithubDialog(
+        token: String,
+        expiry: String,
+        repoBackup: String,
+        repoPublic: String,
+        username: String,
+        onConfirm: (String, String, String, String, String) -> Unit,
+        onDismiss: () -> Unit
+    ) {
+        var newToken by remember { mutableStateOf(token) }
+        var newExpiry by remember { mutableStateOf(expiry) }
+        var newRepoBackup by remember { mutableStateOf(repoBackup) }
+        var newRepoPublic by remember { mutableStateOf(repoPublic) }
+        var newUsername by remember { mutableStateOf(username) }
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.settings_github)) },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = newUsername,
+                        onValueChange = { newUsername = it },
+                        label = { Text(stringResource(R.string.settings_github_username)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = newRepoPublic,
+                        onValueChange = { newRepoPublic = it },
+                        label = { Text(stringResource(R.string.settings_github_repo_public)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = newRepoBackup,
+                        onValueChange = { newRepoBackup = it },
+                        label = { Text(stringResource(R.string.settings_github_repo_backup)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = newToken,
+                        onValueChange = { newToken = it },
+                        label = { Text(stringResource(R.string.settings_github_token)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = newExpiry,
+                        onValueChange = { newExpiry = it },
+                        label = { Text(stringResource(R.string.settings_github_token_expiry)) },
+                        placeholder = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onConfirm(newToken, newExpiry, newRepoBackup, newRepoPublic, newUsername)
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.dialog_cancel))
+                }
+            }
+        )
+    }
+}
+
+// Github
+@Composable
+fun GithubDialog(
+    token: String,
+    expiry: String,
+    repoBackup: String,
+    repoPublic: String,
+    username: String,
+    onConfirm: (String, String, String, String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newToken by remember { mutableStateOf(token) }
+    var newExpiry by remember { mutableStateOf(expiry) }
+    var newRepoBackup by remember { mutableStateOf(repoBackup) }
+    var newRepoPublic by remember { mutableStateOf(repoPublic) }
+    var newUsername by remember { mutableStateOf(username) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_github)) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = newUsername,
+                    onValueChange = { newUsername = it },
+                    label = { Text(stringResource(R.string.settings_github_username)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newRepoPublic,
+                    onValueChange = { newRepoPublic = it },
+                    label = { Text(stringResource(R.string.settings_github_repo_public)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newRepoBackup,
+                    onValueChange = { newRepoBackup = it },
+                    label = { Text(stringResource(R.string.settings_github_repo_backup)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newToken,
+                    onValueChange = { newToken = it },
+                    label = { Text(stringResource(R.string.settings_github_token)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = newExpiry,
+                    onValueChange = { newExpiry = it },
+                    label = { Text(stringResource(R.string.settings_github_token_expiry)) },
+                    placeholder = { Text("YYYY-MM-DD") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(newToken, newExpiry, newRepoBackup, newRepoPublic, newUsername)
+                }
             ) {
                 Text(stringResource(R.string.dialog_confirm))
             }

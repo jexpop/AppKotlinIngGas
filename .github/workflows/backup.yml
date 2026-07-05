@@ -1,0 +1,39 @@
+name: Weekly Supabase Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Cada domingo a las 2:00 AM
+  workflow_dispatch:      # También permite ejecución manual
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo privado
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.USERNAME }}/${{ secrets.REPO_BACKUP }}
+          token: ${{ secrets.PAT }}
+          path: backup-repo
+
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Hacer backup de Supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          FILENAME="backup_$(date +%Y%m%d).sql"
+          pg_dump "$SUPABASE_DB_URL" > backup-repo/sql/$FILENAME
+          echo "Backup generado: $FILENAME"
+
+      - name: Commit y push al repo privado
+        run: |
+          cd backup-repo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          mkdir -p sql
+          git add .
+          git diff --staged --quiet || git commit -m "Backup automático $(date +%Y-%m-%d)"
+          git push
