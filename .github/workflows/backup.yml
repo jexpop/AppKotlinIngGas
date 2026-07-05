@@ -3,7 +3,7 @@ name: Weekly Supabase Backup
 on:
   schedule:
     - cron: '0 2 * * 0'  # Cada domingo a las 2:00 AM
-  workflow_dispatch:      # También permite ejecución manual
+  workflow_dispatch:
 
 jobs:
   backup:
@@ -17,22 +17,19 @@ jobs:
           token: ${{ secrets.PAT }}
           path: backup-repo
 
-      - name: Instalar pg_dump 17
-        run: |
-          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-17
-      
-      - name: Verificar versión de pg_dump
-        run: pg_dump --version
-
-      - name: Hacer backup de Supabase
+      - name: Backup con pg_dump 17 (Docker)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           FILENAME="backup_$(date +%Y%m%d).sql"
-          pg_dump "$SUPABASE_DB_URL" > backup-repo/sql/$FILENAME
+          mkdir -p backup-repo/sql
+
+          docker run --rm \
+            -v $PWD/backup-repo/sql:/backup \
+            -e SUPABASE_DB_URL="$SUPABASE_DB_URL" \
+            postgres:17 \
+            bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/$FILENAME'
+
           echo "Backup generado: $FILENAME"
 
       - name: Commit y push al repo privado
