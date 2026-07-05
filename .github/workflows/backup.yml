@@ -9,6 +9,9 @@ jobs:
   backup:
     runs-on: ubuntu-latest
 
+    container:
+      image: postgres:17
+
     steps:
       - name: Checkout repo privado
         uses: actions/checkout@v4
@@ -17,19 +20,16 @@ jobs:
           token: ${{ secrets.PAT }}
           path: backup-repo
 
-      - name: Crear backup con PostgreSQL 17
+      - name: Comprobar versión
+        run: pg_dump --version
+
+      - name: Hacer backup de Supabase
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           mkdir -p backup-repo/sql
           FILENAME="backup_$(date +%Y%m%d).sql"
-
-          docker run --rm \
-            -v "${{ github.workspace }}/backup-repo/sql:/backup" \
-            postgres:17 \
-            bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/'"$FILENAME"'' \
-            -e SUPABASE_DB_URL="$SUPABASE_DB_URL"
-
+          pg_dump "$SUPABASE_DB_URL" > "backup-repo/sql/$FILENAME"
           echo "Backup generado: $FILENAME"
 
       - name: Commit y push
