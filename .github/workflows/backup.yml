@@ -2,7 +2,7 @@ name: Weekly Supabase Backup
 
 on:
   schedule:
-    - cron: '0 2 * * 0'   # Domingo a las 02:00 UTC
+    - cron: '0 2 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -17,51 +17,11 @@ jobs:
           token: ${{ secrets.PAT }}
           path: backup-repo
 
-      - name: Instalar PostgreSQL Client 17
+      - name: Comprobar Docker
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl ca-certificates gnupg lsb-release
-
-          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | gpg --dearmor \
-            | sudo tee /usr/share/keyrings/postgresql.gpg > /dev/null
-
-          echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] \
-          https://apt.postgresql.org/pub/repos/apt \
-          $(lsb_release -cs)-pgdg main" \
-            | sudo tee /etc/apt/sources.list.d/pgdg.list
-
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-17
-
-      - name: Comprobar versión
-        run: |
-          which pg_dump
-          pg_dump --version
-
-      - name: Hacer backup de Supabase
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: |
-          mkdir -p backup-repo/sql
-          FILENAME="backup_$(date +%Y%m%d).sql"
-
-          pg_dump "$SUPABASE_DB_URL" > "backup-repo/sql/$FILENAME"
-
-          echo "Backup generado: $FILENAME"
+          docker --version
+          docker info
 
       - name: Commit y push al repo privado
         run: |
-          cd backup-repo
-
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-          git add sql/
-
-          if git diff --staged --quiet; then
-            echo "No hay cambios para subir."
-          else
-            git commit -m "Backup automático $(date +%Y-%m-%d)"
-            git push
-          fi
+          echo "Prueba"
