@@ -23,13 +23,14 @@ jobs:
         run: |
           FILENAME="backup_$(date +%Y%m%d).sql"
           mkdir -p backup-repo/sql
-
+      
           docker run --rm \
             -v $PWD/backup-repo/sql:/backup \
             -e SUPABASE_DB_URL="$SUPABASE_DB_URL" \
+            -e FILENAME="$FILENAME" \
             postgres:17 \
             bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/$FILENAME'
-
+      
           echo "Backup generado: $FILENAME"
 
       - name: Commit y push al repo privado
