@@ -2,8 +2,8 @@ name: Weekly Supabase Backup
 
 on:
   schedule:
-    - cron: '0 2 * * 0'  # Cada domingo a las 2:00 AM
-  workflow_dispatch:      # También permite ejecución manual
+    - cron: '0 2 * * 0'   # Cada domingo a las 2:00 AM UTC
+  workflow_dispatch:
 
 jobs:
   backup:
@@ -17,15 +17,22 @@ jobs:
           token: ${{ secrets.PAT }}
           path: backup-repo
 
-      - name: Instalar cliente PostgreSQL
-        run: sudo apt-get install -y postgresql-client
+      - name: Instalar PostgreSQL Client 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Comprobar versión de pg_dump
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       - name: Hacer backup de Supabase
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
+          mkdir -p backup-repo/sql
           FILENAME="backup_$(date +%Y%m%d).sql"
-          pg_dump "$SUPABASE_DB_URL" > backup-repo/sql/$FILENAME
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" > "backup-repo/sql/$FILENAME"
           echo "Backup generado: $FILENAME"
 
       - name: Commit y push al repo privado
@@ -33,7 +40,12 @@ jobs:
           cd backup-repo
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          mkdir -p sql
-          git add .
-          git diff --staged --quiet || git commit -m "Backup automático $(date +%Y-%m-%d)"
-          git push
+
+          git add sql/
+
+          if git diff --staged --quiet; then
+            echo "No hay cambios para subir."
+          else
+            git commit -m "Backup automático $(date +%Y-%m-%d)"
+            git push
+          fi
