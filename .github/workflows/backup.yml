@@ -2,7 +2,7 @@ name: Weekly Supabase Backup
 
 on:
   schedule:
-    - cron: '0 2 * * 0'   # Cada domingo a las 2:00 AM UTC
+    - cron: '0 2 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -17,25 +17,22 @@ jobs:
           token: ${{ secrets.PAT }}
           path: backup-repo
 
-      - name: Instalar PostgreSQL Client 17
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client-17
-
-      - name: Comprobar versión de pg_dump
-        run: |
-          /usr/lib/postgresql/17/bin/pg_dump --version
-
-      - name: Hacer backup de Supabase
+      - name: Crear backup con PostgreSQL 17
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
           mkdir -p backup-repo/sql
           FILENAME="backup_$(date +%Y%m%d).sql"
-          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" > "backup-repo/sql/$FILENAME"
+
+          docker run --rm \
+            -v "${{ github.workspace }}/backup-repo/sql:/backup" \
+            postgres:17 \
+            bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/'"$FILENAME"'' \
+            -e SUPABASE_DB_URL="$SUPABASE_DB_URL"
+
           echo "Backup generado: $FILENAME"
 
-      - name: Commit y push al repo privado
+      - name: Commit y push
         run: |
           cd backup-repo
           git config user.name "GitHub Actions"
@@ -44,7 +41,7 @@ jobs:
           git add sql/
 
           if git diff --staged --quiet; then
-            echo "No hay cambios para subir."
+            echo "No hay cambios."
           else
             git commit -m "Backup automático $(date +%Y-%m-%d)"
             git push
