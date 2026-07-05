@@ -23,6 +23,9 @@ jobs:
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17
+      
+      - name: Verificar versión de pg_dump
+        run: pg_dump --version
 
       - name: Hacer backup de Supabase
         env:
