@@ -2,7 +2,7 @@ name: Weekly Supabase Backup
 
 on:
   schedule:
-    - cron: '0 2 * * 0'  # Cada domingo a las 2:00 AM
+    - cron: '0 2 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -10,35 +10,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo privado
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ secrets.USERNAME }}/${{ secrets.REPO_BACKUP }}
-          token: ${{ secrets.PAT }}
-          path: backup-repo
-
-      - name: Backup con pg_dump 17 (Docker)
+      - name: Ping y backup cifrado
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ENCRYPTION_PASSWORD: ${{ secrets.ENCRYPTION_PASSWORD }}
         run: |
-          FILENAME="backup_$(date +%Y%m%d).sql"
-          mkdir -p backup-repo/sql
-      
+          # Generar backup SQL con Docker
+          FILENAME="backup_$(date +%Y%m%d).sql.enc"
+          
           docker run --rm \
-            -v $PWD/backup-repo/sql:/backup \
+            -v $PWD:/backup \
             -e SUPABASE_DB_URL="$SUPABASE_DB_URL" \
-            -e FILENAME="$FILENAME" \
             postgres:17 \
-            bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/$FILENAME'
-      
-          echo "Backup generado: $FILENAME"
+            bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/backup.sql'
+          
+          echo "Backup SQL generado"
 
-      - name: Commit y push al repo privado
+      - name: Cifrar y subir a Supabase Storage
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ENCRYPTION_PASSWORD: ${{ secrets.ENCRYPTION_PASSWORD }}
         run: |
-          cd backup-repo
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          mkdir -p sql
-          git add .
-          git diff --staged --quiet || git commit -m "Backup automático $(date +%Y-%m-%d)"
-          git push
+          pip3 install cryptography supabase --quiet
+          
+          python3 << 'EOF'
+          import os
+          import secrets as sec
+          from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+          from cryptography.hazmat.primitives import hashes
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          from supabase import create_client
+          from datetime import datetime
+
+          # Cifrar
+          password = os.environ['ENCRYPTION_PASSWORD'].encode()
+          salt = b'ecogar_salt_v1'
+          kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
+          key = kdf.derive(password)
+
+          with open('backup.sql', 'rb') as f:
+              data = f.read()
+
+          iv = sec.token_bytes(12)
+          aesgcm = AESGCM(key)
+          encrypted = iv + aesgcm.encrypt(iv, data, None)
+
+          # Subir a Supabase Storage
+          filename = f"backup_{datetime.now().strftime('%Y%m%d')}.sql.enc"
+          url = os.environ['SUPABASE_URL']
+          key_sb = os.environ['SUPABASE_SERVICE_KEY']
+          client = create_client(url, key_sb)
+          path = f"sql/{filename}"
+          client.storage.from_('backups').upload(path, encrypted, {"upsert": "true"})
+          print(f"Backup cifrado subido: {path}")
+
+          # Limpiar fichero temporal
+          os.remove('backup.sql')
+          print("Fichero temporal eliminado")
+          EOF
