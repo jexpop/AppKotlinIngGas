@@ -136,6 +136,11 @@ class SettingsViewModel(
         return true
     }
 
+    /** Obtiene el salt actual en Base64 (solo para admin) */
+    fun getEncryptionSaltBase64(): String? {
+        return EncryptionManager.getSaltBase64(context)
+    }
+
     fun signOut(context: android.content.Context, onSuccess: () -> Unit) {
         viewModelScope.launch {
             runCatching {

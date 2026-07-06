@@ -64,7 +64,7 @@ class ImportCsvUseCase(
                     ?.firstOrNull { it.id == bankId }
                 val bankCode = bank?.code ?: bankId.toString()
                 val fileName = EncryptionManager.generateFileName(bankCode, paymentType, yearMonth)
-                val encryptedData = EncryptionManager.encrypt(content.toByteArray(), password)
+                val encryptedData = EncryptionManager.encrypt(content.toByteArray(), password, context)
 
                 // Subir a Supabase Storage
                 StorageManager.uploadCsvBackup(fileName, encryptedData)

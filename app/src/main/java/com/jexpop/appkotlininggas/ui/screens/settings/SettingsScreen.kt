@@ -2,12 +2,16 @@ package com.jexpop.appkotlininggas.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jexpop.appkotlininggas.R
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,6 +20,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.style.TextOverflow
+import android.content.Context
+import android.content.ClipData
+import android.content.ClipboardManager
 
 
 @Composable
@@ -142,6 +150,76 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall
                 )
+            }
+
+            // Mostrar salt actual (solo admin, solo si hay password configurada)
+            if (isEncryptionConfigured) {
+                val saltBase64 = remember { mutableStateOf<String?>(null) }
+                val showSalt = remember { mutableStateOf(false) }
+
+                LaunchedEffect(showSalt.value) {
+                    if (showSalt.value && saltBase64.value == null) {
+                        saltBase64.value = viewModel.getEncryptionSaltBase64()
+                    }
+                }
+
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Salt de cifrado (Base64)",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "Necesario para descifrar backups en scripts externos",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            TextButton(
+                                onClick = { showSalt.value = !showSalt.value }
+                            ) {
+                                Text(if (showSalt.value) "Ocultar" else "Mostrar")
+                            }
+                        }
+
+                        if (showSalt.value && saltBase64.value != null) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = saltBase64.value!!,
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 12.sp
+                                    ),
+                                    modifier = Modifier.weight(1f),
+                                    overflow = TextOverflow.Ellipsis,
+                                    maxLines = 2
+                                )
+                                IconButton(
+                                    onClick = {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        clipboard.setPrimaryClip(ClipData.newPlainText("Encryption Salt", saltBase64.value!!))
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ContentCopy,
+                                        contentDescription = "Copiar"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -367,6 +445,7 @@ fun SettingsScreen(
 
 }
 
+
 @Composable
 fun PasswordDialog(
     onConfirm: (String, String) -> Unit,
@@ -412,87 +491,8 @@ fun PasswordDialog(
             }
         }
     )
-
-    // Github
-    @Composable
-    fun GithubDialog(
-        token: String,
-        expiry: String,
-        repoBackup: String,
-        repoPublic: String,
-        username: String,
-        onConfirm: (String, String, String, String, String) -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        var newToken by remember { mutableStateOf(token) }
-        var newExpiry by remember { mutableStateOf(expiry) }
-        var newRepoBackup by remember { mutableStateOf(repoBackup) }
-        var newRepoPublic by remember { mutableStateOf(repoPublic) }
-        var newUsername by remember { mutableStateOf(username) }
-
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.settings_github)) },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = newUsername,
-                        onValueChange = { newUsername = it },
-                        label = { Text(stringResource(R.string.settings_github_username)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newRepoPublic,
-                        onValueChange = { newRepoPublic = it },
-                        label = { Text(stringResource(R.string.settings_github_repo_public)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newRepoBackup,
-                        onValueChange = { newRepoBackup = it },
-                        label = { Text(stringResource(R.string.settings_github_repo_backup)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newToken,
-                        onValueChange = { newToken = it },
-                        label = { Text(stringResource(R.string.settings_github_token)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = newExpiry,
-                        onValueChange = { newExpiry = it },
-                        label = { Text(stringResource(R.string.settings_github_token_expiry)) },
-                        placeholder = { Text("YYYY-MM-DD") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onConfirm(newToken, newExpiry, newRepoBackup, newRepoPublic, newUsername)
-                    }
-                ) {
-                    Text(stringResource(R.string.dialog_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.dialog_cancel))
-                }
-            }
-        )
-    }
 }
+
 
 // Github
 @Composable

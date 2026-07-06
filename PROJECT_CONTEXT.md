@@ -145,12 +145,13 @@ ImportScreen (Compose)
 
 ### 5.3 Cifrado (`data/EncryptionManager`)
 
-- **Algoritmo**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iter, salt fijo `"ecogar_salt_v1"`)
-- **Storage**: `EncryptedSharedPreferences` (AndroidX Security Crypto) para password maestra
+- **Algoritmo**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iter, **salt aleatorio 16 bytes por usuario**)
+- **Storage**: `EncryptedSharedPreferences` (AndroidX Security Crypto) para password maestra + salt
 - **Formato backup**: `IV (12 bytes) || ciphertext` → `.csv.enc`
 - **Naming**: `{bankCode}_{c|a}_{YYYYMM}.csv.enc`
+- **Exportación salt**: Settings (admin) → "Mostrar" → copia Base64 al portapapeles
 
-> ⚠️ **Salt fijo** → mismo password = misma clave. Cambiar a salt aleatorio por usuario/device.
+> ✅ **Salt aleatorio único por usuario** → claves derivadas distintas incluso con misma password.
 
 ### 5.4 Backups
 
@@ -209,7 +210,7 @@ Ambos usan `upsert=true` (sobrescriben si existe).
 ## 8. Deuda Técnica y TODOs Priorizados
 
 ### 🔴 Crítico
-- [ ] **Salt fijo en PBKDF2** (`EncryptionManager.kt:18`) → Salt aleatorio por usuario + almacenar en EncryptedSharedPrefs
+- [x] **Salt fijo en PBKDF2** (`EncryptionManager.kt:18`) → Salt aleatorio por usuario + almacenar en EncryptedSharedPrefs ✅ **COMPLETADO 2025-07-06**
 - [ ] **`TransactionRepository.deleteByMonthBankAndType`** usa `31` día fijo → falla feb/30d (`:25-26`)
 - [ ] **Backups sin `await`** (`ImportCsvUseCase.kt:70-75`) → errores solo log, no reintento ni UI
 - [ ] **`CategorizationUseCase` regla tipo 99** hardcodeada → mover a BD o config
@@ -372,4 +373,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Proyecto: AppKotlinIngGas | Última sync: commit actual*
+*Generado: 2025-07-06 | Proyecto: AppKotlinIngGas | Última sync: commit actual (salt aleatorio PBKDF2 + exportación salt en Settings)*
