@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.0.2] - 2025-07-07
 
 ### Fixed
 - **Selector de mes/banco en filtros de Transacciones** (`TransactionsScreen.kt`): el `ExposedDropdownMenuBox` no respondía correctamente al pulsar. Reemplazado por el patrón `OutlinedButton` + `AlertDialog` con lista scrollable de `TextButton` (mismo enfoque ya usado en `CategoriesScreen.kt` para grupo padre y periodicidad), más robusto y sin problemas de anclaje.
