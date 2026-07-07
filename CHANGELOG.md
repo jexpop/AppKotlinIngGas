@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Selector de mes/banco en filtros de Transacciones** (`TransactionsScreen.kt`): el `ExposedDropdownMenuBox` no respondía correctamente al pulsar. Reemplazado por el patrón `OutlinedButton` + `AlertDialog` con lista scrollable de `TextButton` (mismo enfoque ya usado en `CategoriesScreen.kt` para grupo padre y periodicidad), más robusto y sin problemas de anclaje.
+- Import incorrecto de `TextOverflow` (`androidx.compose.ui.text.TextOverflow` → `androidx.compose.ui.text.style.TextOverflow`).
+
+### Added
+- Strings `transactions_select_month` y `transactions_select_bank` (`strings.xml`).
+
 ---
 
 ## [1.0.1] - 2025-07-06

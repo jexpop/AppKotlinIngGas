@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
@@ -12,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -187,8 +190,8 @@ fun FiltersPanel(
     onBankSelected: (com.jexpop.appkotlininggas.data.model.Bank?) -> Unit,
     onPaymentTypeSelected: (String?) -> Unit
 ) {
-    var monthExpanded by remember { mutableStateOf(false) }
-    var bankExpanded by remember { mutableStateOf(false) }
+    var showMonthPicker by remember { mutableStateOf(false) }
+    var showBankPicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -196,80 +199,42 @@ fun FiltersPanel(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Filtro por mes
-        ExposedDropdownMenuBox(
-            expanded = monthExpanded,
-            onExpandedChange = { monthExpanded = !monthExpanded }
+        // Filtro por mes - usando OutlinedButton + AlertDialog
+        Text(
+            text = stringResource(R.string.transactions_month),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        OutlinedButton(
+            onClick = { showMonthPicker = true },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            OutlinedTextField(
-                value = selectedMonth?.let { DateFormatter.formatMonth(it) }
+            Text(
+                text = selectedMonth?.let { DateFormatter.formatMonth(it) }
                     ?: stringResource(R.string.transactions_all_months),
-                onValueChange = {},
-                readOnly = true,
-                label = { Text(stringResource(R.string.transactions_month)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = monthExpanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            ExposedDropdownMenu(
-                expanded = monthExpanded,
-                onDismissRequest = { monthExpanded = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.transactions_all_months)) },
-                    onClick = {
-                        onMonthSelected(null)
-                        monthExpanded = false
-                    }
-                )
-                months.forEach { monthItem ->
-                    DropdownMenuItem(
-                        text = { Text(DateFormatter.formatMonth(monthItem)) },
-                        onClick = {
-                            onMonthSelected(monthItem)
-                            monthExpanded = false
-                        }
-                    )
-                }
-            }
         }
 
-        // Filtro por banco (solo si hay más de uno)
+        // Filtro por banco (solo si hay más de uno) - usando OutlinedButton + AlertDialog
         if (banks.size > 1) {
-            ExposedDropdownMenuBox(
-                expanded = bankExpanded,
-                onExpandedChange = { bankExpanded = !bankExpanded }
+            Text(
+                text = stringResource(R.string.nav_banks),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+                onClick = { showBankPicker = true },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                OutlinedTextField(
-                    value = selectedBank?.name ?: stringResource(R.string.transactions_all_banks),
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.nav_banks)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = bankExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
+                Text(
+                    text = selectedBank?.name ?: stringResource(R.string.transactions_all_banks),
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
-                ExposedDropdownMenu(
-                    expanded = bankExpanded,
-                    onDismissRequest = { bankExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.transactions_all_banks)) },
-                        onClick = {
-                            onBankSelected(null)
-                            bankExpanded = false
-                        }
-                    )
-                    banks.forEach { bank ->
-                        DropdownMenuItem(
-                            text = { Text(bank.name) },
-                            onClick = {
-                                onBankSelected(bank)
-                                bankExpanded = false
-                            }
-                        )
-                    }
-                }
             }
         }
 
@@ -289,6 +254,80 @@ fun FiltersPanel(
                 selected = selectedPaymentType == "C",
                 onClick = { onPaymentTypeSelected("C") },
                 label = { Text(stringResource(R.string.transactions_credit)) }
+            )
+        }
+
+        // Dialog selector de mes
+        if (showMonthPicker) {
+            AlertDialog(
+                onDismissRequest = { showMonthPicker = false },
+                title = { Text(stringResource(R.string.transactions_select_month)) },
+                text = {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        TextButton(
+                            onClick = {
+                                onMonthSelected(null)
+                                showMonthPicker = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.transactions_all_months))
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        months.forEach { monthItem ->
+                            TextButton(
+                                onClick = {
+                                    onMonthSelected(monthItem)
+                                    showMonthPicker = false
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(DateFormatter.formatMonth(monthItem))
+                            }
+                        }
+                    }
+                },
+                confirmButton = {}
+            )
+        }
+
+        // Dialog selector de banco
+        if (showBankPicker) {
+            AlertDialog(
+                onDismissRequest = { showBankPicker = false },
+                title = { Text(stringResource(R.string.transactions_select_bank)) },
+                text = {
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        TextButton(
+                            onClick = {
+                                onBankSelected(null)
+                                showBankPicker = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.transactions_all_banks))
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        banks.forEach { bank ->
+                            TextButton(
+                                onClick = {
+                                    onBankSelected(bank)
+                                    showBankPicker = false
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(bank.name)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {}
             )
         }
     }

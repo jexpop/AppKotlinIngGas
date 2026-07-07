@@ -69,6 +69,8 @@
     <string name="transactions_all">Todos</string>
     <string name="transactions_account">Cuenta</string>
     <string name="transactions_credit">Tarjeta</string>
+    <string name="transactions_select_month">Seleccionar mes</string>
+    <string name="transactions_select_bank">Seleccionar banco</string>
 
     <!-- Categorías -->
     <string name="categories_groups">Grupos</string>

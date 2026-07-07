@@ -190,6 +190,7 @@ Ambos usan `upsert=true` (sobrescriben si existe).
 | Navigation | Sealed class `Screen` (route, label, icon) + `NavHost` en `AppNavigation` |
 | Temas | `AppKotlinIngGasTheme` (Material3), `Color.kt`/`Type.kt`/`Theme.kt` |
 | Strings | `strings.xml` (es) — claves: `nav_*`, `import_*`, `settings_*`, `error_*`, `dialog_*` |
+| Selectores/Pickers | `OutlinedButton` (muestra selección) + `AlertDialog` con lista scrollable de `TextButton` — **no** `ExposedDropdownMenuBox`/`DropdownMenu` (problemas de anclaje). Ver `GroupDialog`/`RuleDialog` en `CategoriesScreen.kt` y `FiltersPanel` en `TransactionsScreen.kt` |
 
 ---
 
@@ -373,4 +374,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Proyecto: AppKotlinIngGas | Última sync: commit actual (salt aleatorio PBKDF2 + exportación salt en Settings)*
+*Generado: 2025-07-06 | Proyecto: AppKotlinIngGas | Última sync: commit actual (filtros de Transacciones migrados a patrón `OutlinedButton`+`AlertDialog` para selección de mes/banco)*
