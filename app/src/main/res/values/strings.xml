@@ -71,6 +71,11 @@
     <string name="transactions_credit">Tarjeta</string>
     <string name="transactions_select_month">Seleccionar mes</string>
     <string name="transactions_select_bank">Seleccionar banco</string>
+    <string name="transactions_detail_bank">Banco</string>
+    <string name="transactions_detail_category">Categoría</string>
+    <string name="transactions_detail_uncategorized">Sin categoría</string>
+    <string name="transactions_detail_balance">Saldo</string>
+    <string name="transactions_detail_credit_month">Mes tarjeta</string>
 
     <!-- Categorías -->
     <string name="categories_groups">Grupos</string>

@@ -13,8 +13,8 @@ android {
         applicationId = "com.jexpop.appkotlininggas"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val properties = org.jetbrains.kotlin.konan.properties.loadProperties(
@@ -32,6 +32,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+
+        applicationVariants.all {
+            outputs.all {
+                val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+                output.outputFileName = "AppKotlinIngGas-${versionName}-${buildType.name}.apk"
+            }
         }
     }
     compileOptions {

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.4] - 2026-07-09
+
+### Changed
+- **Listado de Movimientos** (`TransactionsScreen.kt`): al tocar un movimiento se expande para mostrar la descripción completa y datos extra; solo puede haber un movimiento expandido a la vez.
+- La fila compacta de Movimientos mantiene los iconos visuales de cuenta/tarjeta.
+- **Ajustes** (`SettingsScreen.kt`): la versión mostrada ahora se obtiene de `BuildConfig.VERSION_NAME` en vez de estar escrita a mano.
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.4` (`versionCode = 4`).
+
+---
+
 ## [1.0.3] - 2026-07-09
 
 ### Added

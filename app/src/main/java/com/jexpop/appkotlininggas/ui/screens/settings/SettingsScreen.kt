@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import android.content.Context
 import android.content.ClipData
 import android.content.ClipboardManager
+import com.jexpop.appkotlininggas.BuildConfig
 
 
 @Composable
@@ -355,7 +356,7 @@ fun SettingsScreen(
         // Versión
         Spacer(modifier = Modifier.weight(1f))
         Text(
-            text = "${stringResource(R.string.settings_app_version)} 1.0.0",
+            text = "${stringResource(R.string.settings_app_version)} ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.align(Alignment.CenterHorizontally)

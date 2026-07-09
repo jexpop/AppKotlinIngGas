@@ -1,5 +1,6 @@
 package com.jexpop.appkotlininggas.ui.screens.transactions
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.data.model.TransactionView
 import com.jexpop.appkotlininggas.ui.components.DateFormatter
+import androidx.compose.foundation.clickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +40,7 @@ fun TransactionsScreen(
     val selectedPaymentType by viewModel.selectedPaymentType.collectAsState()
     val hasMore by viewModel.hasMore.collectAsState()
     var showFilters by remember { mutableStateOf(false) }
+    var expandedTransactionKey by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
 
     // Cargar más al llegar al final
@@ -50,6 +54,12 @@ fun TransactionsScreen(
     LaunchedEffect(reachedEnd.value) {
         if (reachedEnd.value && hasMore && state !is TransactionsState.Loading) {
             viewModel.loadMore()
+        }
+    }
+
+    LaunchedEffect(transactions) {
+        if (expandedTransactionKey != null && transactions.none { it.expansionKey() == expandedTransactionKey }) {
+            expandedTransactionKey = null
         }
     }
 
@@ -103,8 +113,22 @@ fun TransactionsScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(transactions) { transaction ->
-                        TransactionItem(transaction = transaction)
+                    items(
+                        items = transactions,
+                        key = { it.expansionKey() }
+                    ) { transaction ->
+                        val transactionKey = transaction.expansionKey()
+                        TransactionItem(
+                            transaction = transaction,
+                            expanded = transactionKey == expandedTransactionKey,
+                            onClick = {
+                                expandedTransactionKey = if (transactionKey == expandedTransactionKey) {
+                                    null
+                                } else {
+                                    transactionKey
+                                }
+                            }
+                        )
                     }
                     if (state is TransactionsState.Loading) {
                         item {
@@ -334,54 +358,130 @@ fun FiltersPanel(
 }
 
 @Composable
-fun TransactionItem(transaction: TransactionView) {
+fun TransactionItem(
+    transaction: TransactionView,
+    expanded: Boolean,
+    onClick: () -> Unit
+) {
     val isIncome = transaction.flowType == "H"
     val amountColor = if (isIncome) Color(0xFF2E7D32) else Color(0xFFC62828)
     val amountText = if (isIncome) "+%.2f€".format(transaction.amount)
     else "-%.2f€".format(transaction.amount)
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = transaction.concept,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1
-                )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = DateFormatter.formatDate(transaction.transactionDate),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = transaction.concept,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = if (expanded) Int.MAX_VALUE else 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = if (transaction.paymentType == "C") "💳" else "🏦",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    transaction.groupDescription?.let {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Text(
-                            text = it,
+                            text = DateFormatter.formatDate(transaction.transactionDate),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (transaction.paymentType == "C") "💳" else "🏦",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        transaction.groupDescription?.let {
+                            Text(
+                                text = it,
+                                modifier = Modifier.weight(1f, fill = false),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = amountText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = amountColor
+                )
+            }
+
+            AnimatedVisibility(visible = expanded) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    HorizontalDivider()
+                    TransactionDetailLine(
+                        label = stringResource(R.string.transactions_detail_bank),
+                        value = transaction.bankName ?: "-"
+                    )
+                    TransactionDetailLine(
+                        label = stringResource(R.string.transactions_detail_category),
+                        value = transaction.groupDescription
+                            ?: stringResource(R.string.transactions_detail_uncategorized)
+                    )
+                    transaction.balance?.let {
+                        TransactionDetailLine(
+                            label = stringResource(R.string.transactions_detail_balance),
+                            value = "%.2f€".format(it)
+                        )
+                    }
+                    transaction.creditMonth?.let {
+                        TransactionDetailLine(
+                            label = stringResource(R.string.transactions_detail_credit_month),
+                            value = DateFormatter.formatMonth(it)
                         )
                     }
                 }
             }
-            Text(
-                text = amountText,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = amountColor
-            )
         }
     }
+}
+
+@Composable
+private fun TransactionDetailLine(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+private fun TransactionView.expansionKey(): String {
+    return id?.toString() ?: "$transactionDate-$concept-$amount-$paymentType"
 }

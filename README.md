@@ -2,6 +2,8 @@
 
 Aplicación Android (Kotlin + Jetpack Compose) para gestión de finanzas personales con importación CSV, categorización automática, backup cifrado y sincronización Supabase/Google Drive.
 
+**Versión actual:** 1.0.4
+
 ---
 
 ## Documentación

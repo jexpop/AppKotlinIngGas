@@ -41,6 +41,11 @@ fun CategoriesScreen(
     val ruleTypes by viewModel.ruleTypes.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(state) {
+        if (state is CategoriesState.Error) {
+            errorMessage = (state as CategoriesState.Error).message
+        }
+    }
 
     val tabs = listOf(
         stringResource(R.string.categories_groups),
