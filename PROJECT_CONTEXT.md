@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.4 (`versionCode = 4`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.5 (`versionCode = 5`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -195,7 +195,7 @@ Ambos usan `upsert=true` (sobrescriben si existe).
 | Temas | `AppKotlinIngGasTheme` (Material3), `Color.kt`/`Type.kt`/`Theme.kt` |
 | Strings | `strings.xml` (es) — claves: `nav_*`, `import_*`, `settings_*`, `error_*`, `dialog_*` |
 | Selectores/Pickers | `OutlinedButton` (muestra selección) + `AlertDialog` con lista scrollable de `TextButton` — **no** `ExposedDropdownMenuBox`/`DropdownMenu` (problemas de anclaje). Ver `GroupDialog`/`RuleDialog` en `CategoriesScreen.kt` y `FiltersPanel` en `TransactionsScreen.kt` |
-| Listado de movimientos | Cada fila puede expandirse al tocarla para mostrar concepto completo y datos extra; solo una fila permanece expandida a la vez. La fila compacta mantiene iconos para cuenta/tarjeta. |
+| Listado de movimientos | Cada fila puede expandirse al tocarla para mostrar concepto completo y datos extra; solo una fila permanece expandida a la vez. La fila compacta mantiene iconos para cuenta/tarjeta. Se recarga automáticamente tras una importación correcta. |
 
 ---
 
@@ -379,4 +379,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-09 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.4 | Última sync: listado de Movimientos con expansión única por fila y versión visible desde `BuildConfig.VERSION_NAME` en Ajustes*
+*Generado: 2025-07-06 | Actualizado: 2026-07-09 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.5 | Última sync: listado de Movimientos con expansión única por fila, refresco automático tras importación y versión visible desde `BuildConfig.VERSION_NAME` en Ajustes*

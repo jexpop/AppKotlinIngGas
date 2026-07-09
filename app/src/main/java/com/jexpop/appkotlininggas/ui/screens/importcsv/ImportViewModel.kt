@@ -7,6 +7,7 @@ import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.data.model.Bank
 import com.jexpop.appkotlininggas.data.repository.BankRepository
 import com.jexpop.appkotlininggas.domain.usecase.ImportCsvUseCase
+import com.jexpop.appkotlininggas.ui.TransactionsRefreshBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -70,10 +71,11 @@ class ImportViewModel(
             )
             return
         }
-        viewModelScope.launch {
-            _state.value = ImportState.Loading
-            importCsvUseCase.execute(content, bankId, context)
+            viewModelScope.launch {
+                _state.value = ImportState.Loading
+                importCsvUseCase.execute(content, bankId, context)
                 .onSuccess { count ->
+                    TransactionsRefreshBus.notifyTransactionsChanged()
                     _state.value = ImportState.Success(count)
                 }
                 .onFailure { error ->

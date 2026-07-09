@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.5] - 2026-07-09
+
+### Fixed
+- **Refresco automático de Movimientos**: tras una importación correcta, la pantalla de Movimientos se recarga sola sin necesidad de cerrar y volver a abrir la app.
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.5` (`versionCode = 5`).
+
+---
+
 ## [1.0.4] - 2026-07-09
 
 ### Changed

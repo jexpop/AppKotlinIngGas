@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.jexpop.appkotlininggas.R
 import com.jexpop.appkotlininggas.data.model.TransactionView
+import com.jexpop.appkotlininggas.ui.TransactionsRefreshBus
 import com.jexpop.appkotlininggas.ui.components.DateFormatter
 import androidx.compose.foundation.clickable
 
@@ -60,6 +61,14 @@ fun TransactionsScreen(
     LaunchedEffect(transactions) {
         if (expandedTransactionKey != null && transactions.none { it.expansionKey() == expandedTransactionKey }) {
             expandedTransactionKey = null
+        }
+    }
+
+    val refreshTick by TransactionsRefreshBus.refreshTick.collectAsState()
+    LaunchedEffect(refreshTick) {
+        if (refreshTick > 0L) {
+            expandedTransactionKey = null
+            viewModel.loadTransactions(reset = true)
         }
     }
 
