@@ -108,7 +108,7 @@ ImportScreen (Compose)
 | `period_month` | `PeriodMonth` | id, month (YYYYMM), active, current |
 | `categorization_rule` | `CategorizationRule` | id, rule_type (1,2,4,5,6,7,99), group_id, value1..4 |
 | `categorization_exception` | `CategorizationException` | id, month, group_id, value1, value2 |
-| `app_param` | `AppParam` | cond1, cond2, value (config: GitHub token, expiry, etc.) |
+| app_param | AppParam | cond1, cond2, value (config: GitHub token, expiry, repos, username; ENCRYPTION/SALT para sincronización cifrado entre dispositivos) |
 
 > **Convención**: `@SerialName("snake_case")` mapea snake_case ↔ camelCase.
 
@@ -143,15 +143,17 @@ ImportScreen (Compose)
 
 **Orden**: Excepciones manuales (por mes) → Reglas automáticas (orden BD).
 
-### 5.3 Cifrado (`data/EncryptionManager`)
+## 5.3 Cifrado (data/EncryptionManager)
 
-- **Algoritmo**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iter, **salt aleatorio 16 bytes por usuario**)
-- **Storage**: `EncryptedSharedPreferences` (AndroidX Security Crypto) para password maestra + salt
-- **Formato backup**: `IV (12 bytes) || ciphertext` → `.csv.enc`
+- **Algoritmo**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iter, salt aleatorio 16 bytes por usuario)
+- **Storage local**: EncryptedSharedPreferences (AndroidX Security Crypto) para password maestra + salt
+- **Sincronización salt**: `app_param (ENCRYPTION/SALT)` en Supabase — Base64 del salt, protegido por RLS
+- **Flujo primer dispositivo**: configura contraseña → descarga salt Supabase → si no existe genera nuevo → sube a Supabase
+- **Flujo segundo dispositivo**: arranca app → descarga salt Supabase automáticamente → configura misma contraseña → ficheros compatibles
+- **Formato backup**: IV (12 bytes) || ciphertext → `.csv.enc`
 - **Naming**: `{bankCode}_{c|a}_{YYYYMM}.csv.enc`
-- **Exportación salt**: Settings (admin) → "Mostrar" → copia Base64 al portapapeles
-
-> ✅ **Salt aleatorio único por usuario** → claves derivadas distintas incluso con misma password.
+- **Exportación salt**: Settings (admin) → "Mostrar salt" → copia Base64 al portapapeles (para script Python externo)
+- **Script Python descifrado**: usa salt exportado + contraseña → compatible con cualquier dispositivo autorizado
 
 ### 5.4 Backups
 

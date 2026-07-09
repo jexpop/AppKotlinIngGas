@@ -15,6 +15,9 @@ import com.jexpop.appkotlininggas.ui.AppNavigation
 import com.jexpop.appkotlininggas.ui.screens.LoginScreen
 import com.jexpop.appkotlininggas.ui.theme.AppKotlinIngGasTheme
 import io.github.jan.supabase.auth.handleDeeplinks
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.jexpop.appkotlininggas.data.EncryptionManager
 
 class MainActivity : ComponentActivity() {
 
@@ -24,6 +27,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         supabase.handleDeeplinks(intent)
         enableEdgeToEdge()
+
+        // Sincronizar salt si no existe localmente
+        lifecycleScope.launch {
+            if (authRepository.isAuthenticated() &&
+                EncryptionManager.getSaltBase64(this@MainActivity) == null) {
+                EncryptionManager.downloadSaltFromSupabase(this@MainActivity)
+                    .onSuccess { android.util.Log.d("MAIN", "Salt sincronizado") }
+                    .onFailure { android.util.Log.e("MAIN", "Error sincronizando salt: ${it.message}") }
+            }
+        }
+
         setContent {
             AppKotlinIngGasTheme {
                 var isAuthenticated by remember {

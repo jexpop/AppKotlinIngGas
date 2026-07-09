@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.3] - 2026-07-09
+
+### Added
+- **Sincronización de salt de cifrado entre dispositivos** (`EncryptionManager.kt`): El salt PBKDF2 ahora se sincroniza con Supabase (`app_param: ENCRYPTION/SALT`) para permitir descifrar backups desde cualquier dispositivo autorizado con la misma contraseña maestra.
+- `EncryptionManager.uploadSaltToSupabase(context)`: sube el salt en Base64 a `app_param`.
+- `EncryptionManager.downloadSaltFromSupabase(context)`: descarga el salt si no existe localmente.
+- `EncryptionManager.initializeSaltIfNeeded(context)`: genera salt aleatorio solo si no existe.
+- `MainActivity.kt`: descarga automática del salt al arrancar si el usuario está autenticado y no tiene salt local.
+
+### Changed
+- `SettingsViewModel.saveEncryptionPassword()`: antes de guardar la contraseña, intenta descargar el salt existente de Supabase. Solo genera uno nuevo si no existe en ningún sitio.
+- `EncryptionManager.savePassword()`: ya no genera salt (responsabilidad movida a `initializeSaltIfNeeded`).
+
+### Security
+- El salt almacenado en Supabase (`app_param`) está protegido por RLS (whitelist de emails). Sin la contraseña maestra el salt no permite descifrar nada.
+
+---
+
 ## [1.0.2] - 2025-07-07
 
 ### Fixed

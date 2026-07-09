@@ -123,16 +123,32 @@ class SettingsViewModel(
 
     fun saveEncryptionPassword(password: String, confirmPassword: String): Boolean {
         if (password.isBlank()) {
-            _state.value = SettingsState.Error("La contraseña no puede estar vacía")
+            _state.value = SettingsState.Error(context.getString(R.string.settings_encryption_password_empty))
             return false
         }
         if (password != confirmPassword) {
-            _state.value = SettingsState.Error("Las contraseñas no coinciden")
+            _state.value = SettingsState.Error(context.getString(R.string.settings_encryption_password_mismatch))
             return false
         }
-        EncryptionManager.savePassword(context, password)
-        _isEncryptionConfigured.value = true
-        _state.value = SettingsState.Success
+
+        viewModelScope.launch {
+            // 1. Intentar descargar salt de Supabase
+            EncryptionManager.downloadSaltFromSupabase(context)
+
+            // 2. Si no había salt, generar uno nuevo y subirlo
+            if (EncryptionManager.getSaltBase64(context) == null) {
+                EncryptionManager.initializeSaltIfNeeded(context)
+                EncryptionManager.uploadSaltToSupabase(context)
+                    .onSuccess { android.util.Log.d("SETTINGS", "Nuevo salt subido a Supabase") }
+                    .onFailure { android.util.Log.e("SETTINGS", "Error subiendo salt: ${it.message}") }
+            }
+
+            // 3. Guardar contraseña
+            EncryptionManager.savePassword(context, password)
+            _isEncryptionConfigured.value = true
+            _state.value = SettingsState.Success
+        }
+
         return true
     }
 

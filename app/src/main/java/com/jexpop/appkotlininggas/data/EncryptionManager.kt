@@ -5,6 +5,8 @@ import android.util.Base64
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.jexpop.appkotlininggas.supabase
+import io.github.jan.supabase.postgrest.from
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
@@ -33,17 +35,16 @@ object EncryptionManager {
         )
 
     fun savePassword(context: Context, password: String) {
-        // Generar salt aleatorio único por usuario
-        val salt = ByteArray(16)
-        SecureRandom().nextBytes(salt)
-        val saltB64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+        val prefs = getEncryptedPrefs(context)
+        val existingSalt = prefs.getString(KEY_SALT, null)
 
-        getEncryptedPrefs(context).edit()
+        // Solo guarda la contraseña, NO genera nuevo salt
+        // El salt ya debe existir (descargado de Supabase o generado previamente)
+        prefs.edit()
             .putString(KEY_PASSWORD, password)
-            .putString(KEY_SALT, saltB64)
             .apply()
 
-        Log.d(TAG, "Password y salt guardados")
+        Log.d(TAG, "Password guardada, salt: ${if (existingSalt != null) "existente" else "pendiente de sincronizar"}")
     }
 
     fun getPassword(context: Context): String? {
@@ -54,10 +55,46 @@ object EncryptionManager {
         return getPassword(context) != null
     }
 
-    /** Obtiene el salt actual en Base64 (solo para admin/debug) */
     fun getSaltBase64(context: Context): String? {
-        val prefs = getEncryptedPrefs(context)
-        return prefs.getString(KEY_SALT, null)
+        return getEncryptedPrefs(context).getString(KEY_SALT, null)
+    }
+
+    suspend fun uploadSaltToSupabase(context: Context): Result<Unit> {
+        return runCatching {
+            val saltB64 = getSaltBase64(context) ?: return Result.failure(Exception("No hay salt"))
+            supabase.from("app_param").update({
+                set("value", saltB64)
+            }) {
+                filter {
+                    eq("cond1", "ENCRYPTION")
+                    eq("cond2", "SALT")
+                }
+            }
+            Log.d(TAG, "Salt subido a Supabase")
+        }
+    }
+
+    suspend fun downloadSaltFromSupabase(context: Context): Result<Unit> {
+        return runCatching {
+            val result = supabase.from("app_param")
+                .select {
+                    filter {
+                        eq("cond1", "ENCRYPTION")
+                        eq("cond2", "SALT")
+                    }
+                }
+                .decodeList<com.jexpop.appkotlininggas.data.repository.AppParam>()
+
+            val saltB64 = result.firstOrNull()?.value
+            if (!saltB64.isNullOrBlank()) {
+                getEncryptedPrefs(context).edit()
+                    .putString(KEY_SALT, saltB64)
+                    .apply()
+                Log.d(TAG, "Salt descargado de Supabase")
+            } else {
+                Log.w(TAG, "No hay salt en Supabase")
+            }
+        }
     }
 
     fun encrypt(data: ByteArray, password: String, context: Context): ByteArray {
@@ -66,7 +103,6 @@ object EncryptionManager {
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val iv = cipher.iv
         val encrypted = cipher.doFinal(data)
-        // Prepend IV to encrypted data
         return iv + encrypted
     }
 
@@ -98,7 +134,6 @@ object EncryptionManager {
         return if (saltB64 != null) {
             Base64.decode(saltB64, Base64.NO_WRAP)
         } else {
-            // Fallback legacy (solo si existían datos previos con salt fijo)
             Log.w(TAG, "Salt no encontrado, usando legacy fallback")
             "ecogar_salt_v1".toByteArray()
         }
@@ -108,6 +143,17 @@ object EncryptionManager {
         val code = bankCode.lowercase().replace("[^a-z0-9]".toRegex(), "")
         val type = if (paymentType == "C") "c" else "a"
         return "${code}_${type}_${yearMonth}.csv.enc"
+    }
+
+    fun initializeSaltIfNeeded(context: Context) {
+        val prefs = getEncryptedPrefs(context)
+        if (prefs.getString(KEY_SALT, null) == null) {
+            val salt = ByteArray(16)
+            SecureRandom().nextBytes(salt)
+            val saltB64 = Base64.encodeToString(salt, Base64.NO_WRAP)
+            prefs.edit().putString(KEY_SALT, saltB64).apply()
+            Log.d(TAG, "Nuevo salt inicializado")
+        }
     }
 
 }
