@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.5 (`versionCode = 5`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.8 (`versionCode = 8`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -129,6 +129,25 @@ ImportScreen (Compose)
 
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
+
+### 5.2.2 Copiar Concepto en Detalles de Movimiento (v1.0.8+)
+
+**Funcionalidad**: Al expandir un movimiento, el usuario puede copiar el concepto completo al portapapeles con un click.
+
+**Implementación** (`ui/screens/transactions/TransactionsScreen.kt`):
+- Fila adicional en panel expandido con:
+  - Etiqueta: `transactions_detail_concept`
+  - Texto: concepto completo (hasta 3 líneas)
+  - `IconButton` con icono `ContentCopy`
+- Al click:
+  - `ClipboardManager.setPrimaryClip(ClipData.newPlainText("concept", transaction.concept))`
+  - `Toast`: "Concepto copiado al portapapeles" (`transactions_concept_copied`)
+- **Propósito**: Minimizar errores tipográficos al crear reglas de categorización manualmente → copiar directamente del movimiento
+
+**Strings** (`strings.xml`):
+- `transactions_detail_concept`: "Concepto"
+- `transactions_copy_concept`: "Copiar concepto"
+- `transactions_concept_copied`: "Concepto copiado al portapapeles"
 
 ### 5.2.1 Filtros de Transacciones (`ui/screens/transactions/`)
 
@@ -401,4 +420,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.7 | Última sync: Nuevo filtro "Sin categoría" en Movimientos; corrección reglas categorización (tipos 4, 6, 7)*
+*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.8 | Última sync: Botón copiar concepto en detalles de movimiento; filtro "Sin categoría"; corrección reglas categorización*

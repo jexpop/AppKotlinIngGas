@@ -79,6 +79,9 @@
     <string name="transactions_payment_type">Tipo de pago</string>
     <string name="transactions_category">Categoría</string>
     <string name="transactions_uncategorized_filter">Sin categoría</string>
+    <string name="transactions_detail_concept">Concepto</string>
+    <string name="transactions_copy_concept">Copiar concepto</string>
+    <string name="transactions_concept_copied">Concepto copiado al portapapeles</string>
 
     <!-- Categorías -->
     <string name="categories_groups">Grupos</string>

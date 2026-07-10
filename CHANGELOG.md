@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.8] - 2026-07-10
+
+### Added
+- **Botón copiar concepto en detalles de Movimiento** (`ui/screens/transactions/TransactionsScreen.kt`): Al expandir un movimiento, se muestra el concepto completo con un botón de copia junto a él. Al hacer click, copia el concepto al portapapeles y muestra confirmación con Toast.
+  - Nueva fila en panel expandido con concepto + `IconButton` con icono `ContentCopy`
+  - `ClipboardManager` copia texto al clipboard
+  - Toast de confirmación: "Concepto copiado al portapapeles"
+  - Útil para minimizar errores al crear reglas de categorización manualmente
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.8` (`versionCode = 8`).
+
+---
+
 ## [1.0.7] - 2026-07-10
 
 ### Added
