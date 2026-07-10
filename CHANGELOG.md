@@ -14,11 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `getByFilters()`: el filtro ahora se aplica en servidor mediante `exact("group_id", null)` dentro del bloque `filter { }`, junto al resto de condiciones, antes de `range()`. `exact()` es el método nativo de `postgrest-kt` 3.1.4 para generar `column=is.null` (no existe `isNull()` ni hace falta `FilterOperator` en esta versión). Se elimina el `.let { transactions -> transactions.filter { it.groupId == null } }` posterior al `decodeList`.
 
 ### Added
-- **Contador de movimientos** (`ui/screens/transactions/TransactionsScreen.kt`): Al pie de la lista de Movimientos se muestra el número de transacciones actualmente cargadas para el filtro activo (ej. "23 movimientos"), como ayuda para detectar visualmente resultados inesperados de un filtro.
-  - Nuevo `Text` centrado tras el `LazyColumn`, separado por `HorizontalDivider()`.
-  - `LazyColumn` cambia de `Modifier.fillMaxSize()` a `Modifier.weight(1f)` para dejar espacio fijo al contador dentro del `Column` padre.
-  - Usa `pluralStringResource(R.plurals.transactions_count, ...)` con singular/plural.
-  - **Nota**: al haber paginación (`hasMore`/`loadMore`), el contador refleja los movimientos **cargados hasta el momento**, no el total real en BD que cumple el filtro. Si se carga solo la primera página, el número puede ser menor que el total real.
+- **Contador de movimientos** (`ui/screens/transactions/TransactionsScreen.kt`): Al pie de la lista de Movimientos se muestra el **total real** de transacciones que cumplen el filtro activo (ej. "84 movimientos"), como ayuda para detectar visualmente resultados inesperados de un filtro (así se detectó el bug de paginación descrito arriba).
+  - `TransactionViewRepository.getByFilters()`: activa el conteo exacto de PostgREST con `count(Count.EXACT)` dentro del bloque `select { }` (import `io.github.jan.supabase.postgrest.query.Count`). Devuelve un nuevo tipo `TransactionsPage(items, totalCount)` en vez de solo la lista; `totalCount` se obtiene con `result.countOrNull()` tras `decodeList<TransactionView>()`.
+  - `TransactionsViewModel`: nuevo `StateFlow<Long?> totalCount`, actualizado en cada `loadTransactions()`. No depende de la paginación: refleja el total del filtro en servidor, no lo cargado en cliente.
+  - `TransactionsScreen.kt`: nuevo `Text` centrado tras el `LazyColumn` (separado por `HorizontalDivider()`), usando `pluralStringResource(R.plurals.transactions_count, ...)` sobre `totalCount` (con fallback a `transactions.size` mientras el conteo no ha llegado). `LazyColumn` cambia de `Modifier.fillMaxSize()` a `Modifier.weight(1f)` para dejarle espacio fijo al contador.
+  - **Nota de rendimiento**: `Count.EXACT` calcula el conteo exacto en cada petición (más costoso que sin count). Aceptable para el volumen actual de datos; revisar `Count.PLANNED` si la tabla `transaction_view` crece mucho.
 
 ### Strings (`strings.xml`)
 - Nuevo `<plurals name="transactions_count">`: `"%d movimiento"` (one) / `"%d movimientos"` (other).

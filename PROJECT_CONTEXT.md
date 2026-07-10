@@ -162,7 +162,7 @@ ImportScreen (Compose)
 **Implementación de filtros**:
 - **Repos**: `TransactionViewRepository.getByFilters()` acepta parámetros opcionales.
 - **Filtro "Sin categoría"**: `onlyUncategorized=true` → aplica `exact("group_id", null)` **en la propia query de Supabase**, dentro del bloque `filter { }`, antes de `range()`. Genera `group_id=is.null` en la petición PostgREST. *(Corregido en v1.0.9: antes se filtraba en cliente tras `decodeList`, lo que provocaba que transacciones con `group_id = NULL` fuera de la página actual no se mostraran. Nota: en `postgrest-kt` 3.1.4 no existe `isNull()`; el método correcto para IS NULL es `exact(column, value: Boolean?)`.)*
-- **Contador de movimientos**: al pie de la lista se muestra el nº de transacciones cargadas para el filtro activo (`pluralStringResource(R.plurals.transactions_count, ...)`), útil para detectar visualmente resultados inesperados de un filtro. Refleja solo lo cargado (no el total real si hay más páginas pendientes).
+- **Contador de movimientos**: al pie de la lista se muestra el **total real** de transacciones que cumplen el filtro activo, vía `count(Count.EXACT)` en `TransactionViewRepository.getByFilters()` → `TransactionsPage(items, totalCount)` → `TransactionsViewModel.totalCount` (`StateFlow<Long?>`) → `pluralStringResource(R.plurals.transactions_count, ...)` en pantalla. Independiente de la paginación (no cambia al hacer scroll/`loadMore`). Útil para detectar visualmente resultados inesperados de un filtro.
 - **UI**: `FiltersPanel` con `FilterChip` por tipo de pago y categoría, `OutlinedButton` + `AlertDialog` para mes/banco.
 - **Estado**: Se gestiona en `TransactionsViewModel` con `StateFlow<String?>` para cada filtro; cada cambio recarga transacciones desde offset 0.
 
@@ -421,4 +421,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.9 | Última sync: Fix filtro "Sin categoría" con exact() (paginación); contador de movimientos al pie de la lista*
+*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.9 | Última sync: Fix filtro "Sin categoría" con exact() (paginación); contador de movimientos con total real vía count(Count.EXACT)*

@@ -49,6 +49,7 @@ fun TransactionsScreen(
     val selectedPaymentType by viewModel.selectedPaymentType.collectAsState()
     val selectedCategoryFilter by viewModel.selectedCategoryFilter.collectAsState()
     val hasMore by viewModel.hasMore.collectAsState()
+    val totalCount by viewModel.totalCount.collectAsState()
     var showFilters by remember { mutableStateOf(false) }
     var expandedTransactionKey by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
@@ -164,7 +165,9 @@ fun TransactionsScreen(
                     }
                 }
 
-                // Contador de movimientos (pie de lista)
+                // Contador de movimientos (pie de lista) — total real vía Count.EXACT,
+                // no depende de cuántas páginas se hayan cargado. Fallback a
+                // transactions.size mientras totalCount aún no ha llegado del servidor.
                 HorizontalDivider()
                 Box(
                     modifier = Modifier
@@ -172,11 +175,12 @@ fun TransactionsScreen(
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    val count = (totalCount ?: transactions.size.toLong()).toInt()
                     Text(
                         text = pluralStringResource(
                             R.plurals.transactions_count,
-                            transactions.size,
-                            transactions.size
+                            count,
+                            count
                         ),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

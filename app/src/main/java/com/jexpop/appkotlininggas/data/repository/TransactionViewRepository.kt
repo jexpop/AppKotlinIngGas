@@ -3,7 +3,17 @@ package com.jexpop.appkotlininggas.data.repository
 import com.jexpop.appkotlininggas.data.model.TransactionView
 import com.jexpop.appkotlininggas.supabase
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.Order
+
+/**
+ * Página de resultados de transacciones, incluyendo el total real que cumple
+ * el filtro en base de datos (independiente de cuántos se hayan cargado/paginado).
+ */
+data class TransactionsPage(
+    val items: List<TransactionView>,
+    val totalCount: Long?
+)
 
 class TransactionViewRepository {
 
@@ -46,6 +56,12 @@ class TransactionViewRepository {
         }
     }
 
+    /**
+     * Devuelve la página de transacciones solicitada junto con el total real
+     * (totalCount) que cumple el filtro en base de datos, vía Count.EXACT.
+     * totalCount no depende de la paginación: es el mismo valor para cualquier
+     * offset/limit dado un mismo conjunto de filtros.
+     */
     suspend fun getByFilters(
         month: String? = null,
         bankId: Int? = null,
@@ -56,10 +72,11 @@ class TransactionViewRepository {
         endDate: String? = null,
         limit: Int = 50,
         offset: Int = 0
-    ): Result<List<TransactionView>> {
+    ): Result<TransactionsPage> {
         return runCatching {
-            supabase.from("transaction_view")
+            val result = supabase.from("transaction_view")
                 .select {
+                    count(Count.EXACT)
                     filter {
                         month?.let { eq("month", it) }
                         bankId?.let { eq("bank_id", it) }
@@ -77,7 +94,11 @@ class TransactionViewRepository {
                     order("transaction_date", Order.DESCENDING)
                     range(offset.toLong(), (offset + limit - 1).toLong())
                 }
-                .decodeList<TransactionView>()
+
+            TransactionsPage(
+                items = result.decodeList<TransactionView>(),
+                totalCount = result.countOrNull()
+            )
         }
     }
 

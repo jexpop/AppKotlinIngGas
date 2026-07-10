@@ -63,6 +63,11 @@ class TransactionsViewModel(
     private val _endDate = MutableStateFlow<String?>(null)
     val endDate: StateFlow<String?> = _endDate
 
+    // Total real (servidor) que cumple el filtro activo, vía Count.EXACT.
+    // Independiente de la paginación: no cambia al hacer scroll/loadMore.
+    private val _totalCount = MutableStateFlow<Long?>(null)
+    val totalCount: StateFlow<Long?> = _totalCount
+
     // Paginación
     private var currentOffset = 0
     private val pageSize = 50
@@ -102,6 +107,7 @@ class TransactionsViewModel(
             currentOffset = 0
             _hasMore.value = true
             _transactions.value = emptyList()
+            _totalCount.value = null
         }
 
         if (!_hasMore.value) return
@@ -117,14 +123,15 @@ class TransactionsViewModel(
                 endDate = _endDate.value,
                 limit = pageSize,
                 offset = currentOffset
-            ).onSuccess { result ->
+            ).onSuccess { page ->
                 if (reset) {
-                    _transactions.value = result
+                    _transactions.value = page.items
                 } else {
-                    _transactions.value = _transactions.value + result
+                    _transactions.value = _transactions.value + page.items
                 }
-                _hasMore.value = result.size == pageSize
-                currentOffset += result.size
+                _totalCount.value = page.totalCount
+                _hasMore.value = page.items.size == pageSize
+                currentOffset += page.items.size
                 _state.value = TransactionsState.Success
             }.onFailure {
                 _state.value = TransactionsState.Error(
