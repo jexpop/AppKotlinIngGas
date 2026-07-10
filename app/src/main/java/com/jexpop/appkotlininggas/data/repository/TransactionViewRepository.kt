@@ -51,6 +51,7 @@ class TransactionViewRepository {
         bankId: Int? = null,
         paymentType: String? = null,
         groupId: Int? = null,
+        onlyUncategorized: Boolean = false,
         startDate: String? = null,
         endDate: String? = null,
         limit: Int = 50,
@@ -71,6 +72,13 @@ class TransactionViewRepository {
                     range(offset.toLong(), (offset + limit - 1).toLong())
                 }
                 .decodeList<TransactionView>()
+                .let { transactions ->
+                    if (onlyUncategorized) {
+                        transactions.filter { it.groupId == null }
+                    } else {
+                        transactions
+                    }
+                }
         }
     }
 

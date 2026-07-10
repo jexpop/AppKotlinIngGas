@@ -76,6 +76,9 @@
     <string name="transactions_detail_uncategorized">Sin categoría</string>
     <string name="transactions_detail_balance">Saldo</string>
     <string name="transactions_detail_credit_month">Mes tarjeta</string>
+    <string name="transactions_payment_type">Tipo de pago</string>
+    <string name="transactions_category">Categoría</string>
+    <string name="transactions_uncategorized_filter">Sin categoría</string>
 
     <!-- Categorías -->
     <string name="categories_groups">Grupos</string>

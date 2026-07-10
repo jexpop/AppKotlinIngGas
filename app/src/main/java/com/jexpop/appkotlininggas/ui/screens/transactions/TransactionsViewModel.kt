@@ -54,6 +54,9 @@ class TransactionsViewModel(
     private val _selectedPaymentType = MutableStateFlow<String?>(null)
     val selectedPaymentType: StateFlow<String?> = _selectedPaymentType
 
+    private val _selectedCategoryFilter = MutableStateFlow<String?>(null)
+    val selectedCategoryFilter: StateFlow<String?> = _selectedCategoryFilter
+
     private val _startDate = MutableStateFlow<String?>(null)
     val startDate: StateFlow<String?> = _startDate
 
@@ -109,6 +112,7 @@ class TransactionsViewModel(
                 month = _selectedMonth.value,
                 bankId = _selectedBank.value?.id,
                 paymentType = _selectedPaymentType.value,
+                onlyUncategorized = _selectedCategoryFilter.value == "UNCATEGORIZED",
                 startDate = _startDate.value,
                 endDate = _endDate.value,
                 limit = pageSize,
@@ -144,6 +148,11 @@ class TransactionsViewModel(
 
     fun selectPaymentType(type: String?) {
         _selectedPaymentType.value = type
+        loadTransactions(reset = true)
+    }
+
+    fun selectCategoryFilter(filter: String?) {
+        _selectedCategoryFilter.value = filter
         loadTransactions(reset = true)
     }
 

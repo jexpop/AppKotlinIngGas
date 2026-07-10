@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.7] - 2026-07-10
+
+### Added
+- **Filtro de categoría en Movimientos** (`ui/screens/transactions/`): Nuevo filtro "Sin categoría" para visualizar rápidamente transacciones sin categorizar.
+  - `TransactionsViewModel.kt`: Nuevo estado `selectedCategoryFilter` + método `selectCategoryFilter()`
+  - `TransactionViewRepository.kt`: Parámetro `onlyUncategorized` en `getByFilters()` que filtra transacciones donde `group_id IS NULL`
+  - `TransactionsScreen.kt`: Nuevo `FilterChip` en `FiltersPanel` para seleccionar "Sin categoría"
+  - `strings.xml`: Nuevas claves `transactions_payment_type`, `transactions_category`, `transactions_uncategorized_filter`
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.7` (`versionCode = 7`).
+
+---
+
 ## [1.0.6] - 2026-07-10
 
 ### Fixed

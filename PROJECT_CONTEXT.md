@@ -130,6 +130,24 @@ ImportScreen (Compose)
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
 
+### 5.2.1 Filtros de Transacciones (`ui/screens/transactions/`)
+
+**Estados de filtro** (`TransactionsViewModel`):
+| Filtro | Parámetro | Valores | Efecto |
+|--------|-----------|--------|--------|
+| Mes | `selectedMonth` | `null` o YYYYMM | Carga transacciones del mes seleccionado o todos |
+| Banco | `selectedBank` | `null` o `Bank` | Filtra por banco (solo si hay >1 banco) |
+| Tipo de pago | `selectedPaymentType` | `null`, `"D"` (cuenta), `"C"` (tarjeta) | Filtra por tipo de pago |
+| Categoría | `selectedCategoryFilter` | `null` o `"UNCATEGORIZED"` | Muestra todas categorías o solo sin categoría |
+
+**Implementación de filtros**:
+- **Repos**: `TransactionViewRepository.getByFilters()` acepta parámetros opcionales.
+- **Filtro "Sin categoría"**: `onlyUncategorized=true` → se aplica filtro `group_id IS NULL` en cliente (tras descargar resultados) para compatibilidad con API de Supabase.
+- **UI**: `FiltersPanel` con `FilterChip` por tipo de pago y categoría, `OutlinedButton` + `AlertDialog` para mes/banco.
+- **Estado**: Se gestiona en `TransactionsViewModel` con `StateFlow<String?>` para cada filtro; cada cambio recarga transacciones desde offset 0.
+
+---
+
 ### 5.2 Categorización (`domain/usecase/CategorizationUseCase`)
 
 **Reglas (rule_type)**:
@@ -145,7 +163,7 @@ ImportScreen (Compose)
 
 **Orden**: Excepciones manuales (por mes) → Reglas automáticas (orden BD).
 
-**Notas técnicas**:
+**Notas técnicas** (v1.0.6+):
 - **Tipos 4 y 7** (posiciones 18-30): Extracción segura con validación de longitud (`concept.length > 17`). Posiciones en numeración de usuario (1-basada): 18-30 → índices 0-basados: 17-30 → `substring(17, minOf(31, length))`.
 - **Tipo 6** (primeros 20 chars): Requiere concepto con al menos 20 caracteres para evitar falsos positivos.
 
@@ -383,4 +401,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.6 | Última sync: Corrección reglas categorización tipos 4, 6 y 7 (posiciones 18-30 y validación longitud)*
+*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.7 | Última sync: Nuevo filtro "Sin categoría" en Movimientos; corrección reglas categorización (tipos 4, 6, 7)*

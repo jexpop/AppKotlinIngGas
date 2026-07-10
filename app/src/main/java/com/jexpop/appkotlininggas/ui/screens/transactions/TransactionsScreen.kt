@@ -39,6 +39,7 @@ fun TransactionsScreen(
     val selectedMonth by viewModel.selectedMonth.collectAsState()
     val selectedBank by viewModel.selectedBank.collectAsState()
     val selectedPaymentType by viewModel.selectedPaymentType.collectAsState()
+    val selectedCategoryFilter by viewModel.selectedCategoryFilter.collectAsState()
     val hasMore by viewModel.hasMore.collectAsState()
     var showFilters by remember { mutableStateOf(false) }
     var expandedTransactionKey by remember { mutableStateOf<String?>(null) }
@@ -94,15 +95,17 @@ fun TransactionsScreen(
                     selectedMonth = selectedMonth,
                     selectedBank = selectedBank,
                     selectedPaymentType = selectedPaymentType,
+                    selectedCategoryFilter = selectedCategoryFilter,
                     onMonthSelected = { viewModel.selectMonth(it) },
                     onBankSelected = { viewModel.selectBank(it) },
-                    onPaymentTypeSelected = { viewModel.selectPaymentType(it) }
+                    onPaymentTypeSelected = { viewModel.selectPaymentType(it) },
+                    onCategoryFilterSelected = { viewModel.selectCategoryFilter(it) }
                 )
                 HorizontalDivider()
             }
 
             // Resumen del filtro activo
-            if (selectedMonth != null || selectedBank != null || selectedPaymentType != null) {
+            if (selectedMonth != null || selectedBank != null || selectedPaymentType != null || selectedCategoryFilter != null) {
                 TransactionsSummary(transactions = transactions)
                 HorizontalDivider()
             }
@@ -219,9 +222,11 @@ fun FiltersPanel(
     selectedMonth: String?,
     selectedBank: com.jexpop.appkotlininggas.data.model.Bank?,
     selectedPaymentType: String?,
+    selectedCategoryFilter: String?,
     onMonthSelected: (String?) -> Unit,
     onBankSelected: (com.jexpop.appkotlininggas.data.model.Bank?) -> Unit,
-    onPaymentTypeSelected: (String?) -> Unit
+    onPaymentTypeSelected: (String?) -> Unit,
+    onCategoryFilterSelected: (String?) -> Unit
 ) {
     var showMonthPicker by remember { mutableStateOf(false) }
     var showBankPicker by remember { mutableStateOf(false) }
@@ -272,6 +277,11 @@ fun FiltersPanel(
         }
 
         // Filtro por tipo de pago
+        Text(
+            text = stringResource(R.string.transactions_payment_type),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = selectedPaymentType == null,
@@ -287,6 +297,25 @@ fun FiltersPanel(
                 selected = selectedPaymentType == "C",
                 onClick = { onPaymentTypeSelected("C") },
                 label = { Text(stringResource(R.string.transactions_credit)) }
+            )
+        }
+
+        // Filtro por categoría
+        Text(
+            text = stringResource(R.string.transactions_category),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = selectedCategoryFilter == null,
+                onClick = { onCategoryFilterSelected(null) },
+                label = { Text(stringResource(R.string.transactions_all)) }
+            )
+            FilterChip(
+                selected = selectedCategoryFilter == "UNCATEGORIZED",
+                onClick = { onCategoryFilterSelected("UNCATEGORIZED") },
+                label = { Text(stringResource(R.string.transactions_uncategorized_filter)) }
             )
         }
 

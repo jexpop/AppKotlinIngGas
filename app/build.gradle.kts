@@ -13,8 +13,8 @@ android {
         applicationId = "com.jexpop.appkotlininggas"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.6"
+        versionCode = 7
+        versionName = "1.0.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val properties = org.jetbrains.kotlin.konan.properties.loadProperties(
