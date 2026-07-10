@@ -73,7 +73,14 @@ class CategorizationUseCase(
     // Tipo 4: primeros 3 chars + posiciones 18-30
     private fun matchFirst3AndPositions(concept: String, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
-        val pos1830 = if (concept.length >= 18) concept.substring(17, minOf(30, concept.length)) else ""
+        // Posiciones 18-30 en numeración de usuario = índices 17-29 en código
+        // Extraer desde índice 17 hasta 30 (inclusive), que es substring(17, 31) pero limitado a length
+        val pos1830 = if (concept.length > 17) {
+            val endIndex = minOf(31, concept.length)
+            concept.substring(17, endIndex)
+        } else {
+            ""
+        }
         return rule.value1?.let { first3.equals(it, ignoreCase = true) } == true &&
                 rule.value2?.let { pos1830.contains(it, ignoreCase = true) } == true
     }
@@ -96,6 +103,8 @@ class CategorizationUseCase(
 
     // Tipo 6: primeros 20 chars + rango de importe
     private fun matchFirst20WithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
+        // Validar que hay suficientes caracteres para capturar primeros 20
+        if (concept.length < 20) return false
         val first20 = concept.take(20)
         val min = rule.value2?.toDoubleOrNull() ?: return false
         val max = rule.value3?.toDoubleOrNull() ?: return false
@@ -106,7 +115,14 @@ class CategorizationUseCase(
     // Tipo 7: primeros 3 chars + posiciones 18-30 + rango de importe
     private fun matchFirst3PositionsWithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
-        val pos1830 = if (concept.length >= 18) concept.substring(17, minOf(30, concept.length)) else ""
+        // Posiciones 18-30 en numeración de usuario = índices 17-29 en código
+        // Extraer desde índice 17 hasta 30 (inclusive), que es substring(17, 31) pero limitado a length
+        val pos1830 = if (concept.length > 17) {
+            val endIndex = minOf(31, concept.length)
+            concept.substring(17, endIndex)
+        } else {
+            ""
+        }
         val min = rule.value3?.toDoubleOrNull() ?: return false
         val max = rule.value4?.toDoubleOrNull() ?: return false
         return rule.value1?.let { first3.equals(it, ignoreCase = true) } == true &&

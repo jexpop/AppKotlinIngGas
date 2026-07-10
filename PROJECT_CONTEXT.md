@@ -145,6 +145,10 @@ ImportScreen (Compose)
 
 **Orden**: Excepciones manuales (por mes) → Reglas automáticas (orden BD).
 
+**Notas técnicas**:
+- **Tipos 4 y 7** (posiciones 18-30): Extracción segura con validación de longitud (`concept.length > 17`). Posiciones en numeración de usuario (1-basada): 18-30 → índices 0-basados: 17-30 → `substring(17, minOf(31, length))`.
+- **Tipo 6** (primeros 20 chars): Requiere concepto con al menos 20 caracteres para evitar falsos positivos.
+
 ## 5.3 Cifrado (data/EncryptionManager)
 
 - **Algoritmo**: AES-256-GCM + PBKDF2-HMAC-SHA256 (100k iter, salt aleatorio 16 bytes por usuario)
@@ -379,4 +383,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-09 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.5 | Última sync: listado de Movimientos con expansión única por fila, refresco automático tras importación y versión visible desde `BuildConfig.VERSION_NAME` en Ajustes*
+*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.6 | Última sync: Corrección reglas categorización tipos 4, 6 y 7 (posiciones 18-30 y validación longitud)*

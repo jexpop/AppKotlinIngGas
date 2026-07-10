@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.6] - 2026-07-10
+
+### Fixed
+- **CategorizationUseCase - Reglas tipo 4 y 7** (`domain/usecase/CategorizationUseCase.kt`): Corregido error en extracción de posiciones 18-30 del concepto. Antes usaba `substring(17, minOf(30, concept.length))` que fallaba o truncaba. Ahora usa `substring(17, minOf(31, concept.length))` para capturar correctamente hasta posición 30 (numeración de usuario).
+- **CategorizationUseCase - Regla tipo 6** (`domain/usecase/CategorizationUseCase.kt`): Agregada validación `if (concept.length < 20) return false` para evitar falsos positivos cuando el concepto tiene menos de 20 caracteres. Garantiza que la regla solo se aplica si hay suficientes caracteres para extraer los primeros 20.
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.6` (`versionCode = 6`).
+
+---
+
 ## [1.0.5] - 2026-07-09
 
 ### Fixed
@@ -30,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.3] - 2026-07-09
 
 ### Added
-- **Sincronización de salt de cifrado entre dispositivos** (`EncryptionManager.kt`): El salt PBKDF2 ahora se sincroniza con Supabase (`app_param: ENCRYPTION/SALT`) para permitir descifrar backups desde cualquier dispositivo autorizado con la misma contraseña maestra.
+- **Sincronización de salt de cifrado entre dispositivos** (`EncryptionManager.kt`): El salt PBKDF2 ahora se sincroniza con Supabase (`app_param: ENCRYPTION/SALT`) para permitir descifrar backups en múltiples dispositivos.
 - `EncryptionManager.uploadSaltToSupabase(context)`: sube el salt en Base64 a `app_param`.
 - `EncryptionManager.downloadSaltFromSupabase(context)`: descarga el salt si no existe localmente.
 - `EncryptionManager.initializeSaltIfNeeded(context)`: genera salt aleatorio solo si no existe.
@@ -48,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - 2025-07-07
 
 ### Fixed
-- **Selector de mes/banco en filtros de Transacciones** (`TransactionsScreen.kt`): el `ExposedDropdownMenuBox` no respondía correctamente al pulsar. Reemplazado por el patrón `OutlinedButton` + `AlertDialog` con lista scrollable de `TextButton` (mismo enfoque ya usado en `CategoriesScreen.kt` para grupo padre y periodicidad), más robusto y sin problemas de anclaje.
+- **Selector de mes/banco en filtros de Transacciones** (`TransactionsScreen.kt`): el `ExposedDropdownMenuBox` no respondía correctamente al pulsar. Reemplazado por el patrón `OutlinedButton` + `AlertDialog`.
 - Import incorrecto de `TextOverflow` (`androidx.compose.ui.text.TextOverflow` → `androidx.compose.ui.text.style.TextOverflow`).
 
 ### Added
@@ -59,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2025-07-06
 
 ### Security
-- **Fixed fixed salt in PBKDF2** (`EncryptionManager.kt`): Now generates unique random 16-byte salt per user on password setup, stored in EncryptedSharedPreferences. Legacy fallback retained for backward compatibility.
+- **Fixed fixed salt in PBKDF2** (`EncryptionManager.kt`): Now generates unique random 16-byte salt per user on password setup, stored in EncryptedSharedPreferences. Legacy fallback retained for backwards compatibility.
 - Added salt export in Settings (admin only): "Show salt" button copies Base64 to clipboard for external decryption scripts.
 
 ### Changed
