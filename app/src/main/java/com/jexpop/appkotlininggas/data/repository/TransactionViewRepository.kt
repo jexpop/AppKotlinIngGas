@@ -67,18 +67,17 @@ class TransactionViewRepository {
                         groupId?.let { eq("group_id", it) }
                         startDate?.let { gte("transaction_date", it) }
                         endDate?.let { lte("transaction_date", it) }
+                        // Filtro aplicado en SERVIDOR (antes del range()) para no perder
+                        // resultados fuera de la página actual. "exact" con valor null
+                        // genera group_id=is.null en la query PostgREST.
+                        if (onlyUncategorized) {
+                            exact("group_id", null)
+                        }
                     }
                     order("transaction_date", Order.DESCENDING)
                     range(offset.toLong(), (offset + limit - 1).toLong())
                 }
                 .decodeList<TransactionView>()
-                .let { transactions ->
-                    if (onlyUncategorized) {
-                        transactions.filter { it.groupId == null }
-                    } else {
-                        transactions
-                    }
-                }
         }
     }
 

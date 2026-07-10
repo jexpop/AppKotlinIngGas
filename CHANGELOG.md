@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.9] - 2026-07-10
+
+### Fixed
+- **Filtro "Sin categoría" en Movimientos** (`data/repository/TransactionViewRepository.kt`): El filtro `onlyUncategorized` se aplicaba en cliente **después** de que Supabase ya había recortado los resultados con `range(offset, offset+limit-1)`. Esto provocaba que transacciones con `group_id = NULL` fuera de la página actual (paginación) nunca se descargaran ni, por tanto, se mostraran, aunque cumplieran la condición.
+  - `getByFilters()`: el filtro ahora se aplica en servidor mediante `exact("group_id", null)` dentro del bloque `filter { }`, junto al resto de condiciones, antes de `range()`. `exact()` es el método nativo de `postgrest-kt` 3.1.4 para generar `column=is.null` (no existe `isNull()` ni hace falta `FilterOperator` en esta versión). Se elimina el `.let { transactions -> transactions.filter { it.groupId == null } }` posterior al `decodeList`.
+
+### Added
+- **Contador de movimientos** (`ui/screens/transactions/TransactionsScreen.kt`): Al pie de la lista de Movimientos se muestra el número de transacciones actualmente cargadas para el filtro activo (ej. "23 movimientos"), como ayuda para detectar visualmente resultados inesperados de un filtro.
+  - Nuevo `Text` centrado tras el `LazyColumn`, separado por `HorizontalDivider()`.
+  - `LazyColumn` cambia de `Modifier.fillMaxSize()` a `Modifier.weight(1f)` para dejar espacio fijo al contador dentro del `Column` padre.
+  - Usa `pluralStringResource(R.plurals.transactions_count, ...)` con singular/plural.
+  - **Nota**: al haber paginación (`hasMore`/`loadMore`), el contador refleja los movimientos **cargados hasta el momento**, no el total real en BD que cumple el filtro. Si se carga solo la primera página, el número puede ser menor que el total real.
+
+### Strings (`strings.xml`)
+- Nuevo `<plurals name="transactions_count">`: `"%d movimiento"` (one) / `"%d movimientos"` (other).
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.9` (`versionCode = 9`).
+
+---
+
 ## [1.0.8] - 2026-07-10
 
 ### Added
