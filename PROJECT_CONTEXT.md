@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.11 (`versionCode = 11`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.12 (`versionCode = 12`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -129,6 +129,16 @@ ImportScreen (Compose)
 
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
+
+### 5.2.5 Confirmación de Borrado (v1.0.12+)
+
+**Problema**: borrar un grupo, regla automática o excepción manual era una acción de un solo click sobre el icono de papelera, sin ningún paso de confirmación — un error de click borraba el registro sin posibilidad de deshacer.
+
+**Fix** (`ui/screens/categories/CategoriesScreen.kt`):
+- Nuevo `ConfirmDeleteDialog(itemDescription, onConfirm, onDismiss)`: `AlertDialog` genérico y reutilizable, con botón "Borrar" en color `MaterialTheme.colorScheme.error` y "Cancelar". Muestra siempre `itemDescription` para confirmar visualmente qué registro se va a eliminar.
+- `GroupTreeItem`, `RuleItem`, `ExceptionItem`: cada uno tiene ahora un `var showDeleteConfirm by remember { mutableStateOf(false) }` local; el `IconButton` de papelera pone `showDeleteConfirm = true` en vez de invocar `onDelete` directamente, y el `ConfirmDeleteDialog` solo llama a `onDelete` si el usuario confirma.
+
+**Strings** (`strings.xml`): `categories_delete_confirm_title`, `categories_delete_confirm_message` (con placeholder `%1$s` para la descripción del ítem), `categories_delete_confirm_action`.
 
 ### 5.2.4 Refresco de Meses tras Importar (v1.0.11+)
 
@@ -453,4 +463,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.11 | Última sync: Fix selección de nodos padre en árbol de grupos (GroupPickerDialog); fix refresco de combo de meses y mes current tras importar CSV (refreshAfterImport)*
+*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.12 | Última sync: Confirmación de borrado (ConfirmDeleteDialog) en grupos, reglas automáticas y excepciones manuales*

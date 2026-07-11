@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.12] - 2026-07-11
+
+### Added
+- **Confirmación antes de borrar grupos, reglas y excepciones** (`ui/screens/categories/CategoriesScreen.kt`): El icono de papelera en `GroupTreeItem`, `RuleItem` y `ExceptionItem` borraba directamente al primer click, sin posibilidad de deshacer un error.
+  - Nuevo `ConfirmDeleteDialog(itemDescription, onConfirm, onDismiss)`: diálogo de confirmación genérico y reutilizable, con botón "Borrar" en rojo (`MaterialTheme.colorScheme.error`) y "Cancelar".
+  - Muestra siempre una descripción de qué se va a borrar (descripción del grupo, valor 1 de la regla, o concepto de la excepción).
+  - Aplicado a los 3 puntos de borrado: `GroupTreeItem` (grupos, pestaña Categorías), `RuleItem` (reglas automáticas) y `ExceptionItem` (excepciones manuales). El `IconButton` de papelera ahora abre el diálogo en vez de llamar a `onDelete` directamente.
+
+### Strings (`strings.xml`)
+- Nuevas claves: `categories_delete_confirm_title` ("¿Borrar?"), `categories_delete_confirm_message` ("Esta acción no se puede deshacer. ¿Seguro que quieres borrar \"%1$s\"?"), `categories_delete_confirm_action` ("Borrar").
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.12` (`versionCode = 12`).
+
+---
+
 ## [1.0.11] - 2026-07-11
 
 ### Fixed

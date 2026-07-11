@@ -357,6 +357,45 @@ fun GroupsTab(
     }
 }
 
+/**
+ * Diálogo de confirmación genérico para acciones de borrado irreversibles.
+ * Se usa antes de borrar grupos, reglas automáticas y excepciones manuales:
+ * antes, el icono de papelera borraba directamente al primer click, sin
+ * posibilidad de deshacer un error.
+ */
+@Composable
+fun ConfirmDeleteDialog(
+    itemDescription: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.categories_delete_confirm_title)) },
+        text = {
+            Text(stringResource(R.string.categories_delete_confirm_message, itemDescription))
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm()
+                    onDismiss()
+                }
+            ) {
+                Text(
+                    text = stringResource(R.string.categories_delete_confirm_action),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        }
+    )
+}
+
 @Composable
 fun GroupTreeItem(
     group: CategoryGroup,
@@ -368,6 +407,8 @@ fun GroupTreeItem(
     onEdit: (CategoryGroup) -> Unit,
     onDelete: (Int) -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -423,9 +464,17 @@ fun GroupTreeItem(
         IconButton(onClick = { onEdit(group) }) {
             Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.categories_edit_group))
         }
-        IconButton(onClick = { group.id?.let { onDelete(it) } }) {
+        IconButton(onClick = { showDeleteConfirm = true }) {
             Icon(Icons.Filled.Delete, contentDescription = null)
         }
+    }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            itemDescription = group.description,
+            onConfirm = { group.id?.let { onDelete(it) } },
+            onDismiss = { showDeleteConfirm = false }
+        )
     }
 }
 
@@ -708,6 +757,7 @@ fun RuleItem(
     onEdit: (CategorizationRule) -> Unit,
     onDelete: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     val groupName = groups.firstOrNull { it.id == rule.group_id }?.description ?: "?"
     val ruleTypeName = ruleTypes.firstOrNull { it.id == rule.rule_type }?.description ?: "Tipo ${rule.rule_type}"
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -742,10 +792,18 @@ fun RuleItem(
             IconButton(onClick = { onEdit(rule) }) {
                 Icon(Icons.Filled.Edit, contentDescription = null)
             }
-            IconButton(onClick = onDelete) {
+            IconButton(onClick = { showDeleteConfirm = true }) {
                 Icon(Icons.Filled.Delete, contentDescription = null)
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            itemDescription = rule.value1 ?: "$ruleTypeName → $groupName",
+            onConfirm = onDelete,
+            onDismiss = { showDeleteConfirm = false }
+        )
     }
 }
 
@@ -985,6 +1043,7 @@ fun ExceptionItem(
     onEdit: (CategorizationException) -> Unit,
     onDelete: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     val groupName = groups.firstOrNull { it.id == exception.group_id }?.description ?: "?"
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -1007,10 +1066,18 @@ fun ExceptionItem(
             IconButton(onClick = { onEdit(exception) }) {
                 Icon(Icons.Filled.Edit, contentDescription = null)
             }
-            IconButton(onClick = onDelete) {
+            IconButton(onClick = { showDeleteConfirm = true }) {
                 Icon(Icons.Filled.Delete, contentDescription = null)
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        ConfirmDeleteDialog(
+            itemDescription = exception.value1 ?: "${exception.month} → $groupName",
+            onConfirm = onDelete,
+            onDismiss = { showDeleteConfirm = false }
+        )
     }
 }
 

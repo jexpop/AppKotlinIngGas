@@ -105,6 +105,9 @@
     <string name="categories_search_group">Buscar categoría...</string>
     <string name="categories_no_parent">Sin padre (raíz)</string>
     <string name="categories_search_no_results">Sin resultados</string>
+    <string name="categories_delete_confirm_title">¿Borrar?</string>
+    <string name="categories_delete_confirm_message">Esta acción no se puede deshacer. ¿Seguro que quieres borrar \"%1$s\"?</string>
+    <string name="categories_delete_confirm_action">Borrar</string>
 
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>
