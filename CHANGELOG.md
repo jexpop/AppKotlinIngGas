@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.10] - 2026-07-11
+
+### Added
+- **Selector de grupo en árbol con buscador** (`ui/screens/categories/CategoriesScreen.kt`): Nuevo `GroupPickerDialog` reutilizable que sustituye a los antiguos diálogos con lista plana de todos los grupos, difíciles de recorrer cuando hay muchas categorías.
+  - Muestra el árbol de `category_group` colapsado por defecto (solo nodos raíz visibles); cada nodo con hijos se expande/colapsa con un tap, reutilizando la función `buildFlatGroupList()` ya existente en `GroupsTab`.
+  - Campo de búsqueda arriba del árbol: filtra por `description` (contains, ignore case) y auto-expande únicamente las ramas que contienen coincidencias, vía nueva función `findAncestorIdsForQuery()` (recorre `parentId` hacia arriba desde cada match).
+  - Las hojas se seleccionan con un click o con el botón "Confirmar" de su fila; los nodos padre expanden/colapsan en vez de seleccionar (excepto cuando hay búsqueda activa, donde cualquier resultado es seleccionable directamente).
+  - Sustituye los 3 usos previos de selector plano: `GroupDialog` (grupo padre, con opción "Sin padre" vía `allowNoParent`/`onSelectNoParent`), `RuleDialog` (grupo de la regla) y `ExceptionDialog` (grupo de la excepción).
+  - No requiere cambios en `CategoriesViewModel` ni llamadas adicionales a Supabase: opera sobre la misma `List<CategoryGroup>` ya cargada en memoria.
+
+### Strings (`strings.xml`)
+- Nuevas claves: `categories_search_group` ("Buscar categoría..."), `categories_no_parent` ("Sin padre (raíz)"), `categories_search_no_results` ("Sin resultados").
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.10` (`versionCode = 10`).
+
+---
+
 ## [1.0.9] - 2026-07-10
 
 ### Fixed

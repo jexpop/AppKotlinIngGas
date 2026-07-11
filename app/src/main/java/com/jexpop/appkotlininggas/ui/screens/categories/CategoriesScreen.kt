@@ -116,6 +116,155 @@ fun buildFlatGroupList(
     return result
 }
 
+/**
+ * Devuelve el conjunto de ids de todos los ancestros de los grupos cuya descripción
+ * contiene [query] (ignorando mayúsculas/minúsculas). Se usa para auto-expandir el
+ * árbol del selector de grupo cuando el usuario está buscando.
+ */
+fun findAncestorIdsForQuery(groups: List<CategoryGroup>, query: String): Set<Int> {
+    if (query.isBlank()) return emptySet()
+    val byId = groups.associateBy { it.id }
+    val ancestors = mutableSetOf<Int>()
+    groups.filter { it.description.contains(query, ignoreCase = true) }.forEach { match ->
+        var parentId = match.parentId
+        while (parentId != null) {
+            ancestors.add(parentId)
+            parentId = byId[parentId]?.parentId
+        }
+    }
+    return ancestors
+}
+
+/**
+ * Selector de grupo reutilizable en forma de árbol expandible con buscador.
+ * Sustituye a los antiguos AlertDialog con lista plana de todos los grupos.
+ */
+@Composable
+fun GroupPickerDialog(
+    title: String,
+    groups: List<CategoryGroup>,
+    excludeId: Int? = null,
+    allowNoParent: Boolean = false,
+    onSelectNoParent: (() -> Unit)? = null,
+    onSelect: (CategoryGroup) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    var manuallyExpanded by remember { mutableStateOf(setOf<Int>()) }
+
+    val selectableGroups = remember(groups, excludeId) {
+        if (excludeId == null) groups else groups.filter { it.id != excludeId }
+    }
+    val searchExpandedIds = remember(selectableGroups, query) {
+        findAncestorIdsForQuery(selectableGroups, query)
+    }
+    val expandedIds = manuallyExpanded + searchExpandedIds
+    val visibleGroups = remember(selectableGroups, query) {
+        if (query.isBlank()) selectableGroups
+        else selectableGroups.filter { it.description.contains(query, ignoreCase = true) }
+    }
+    val flatList = remember(selectableGroups, expandedIds, query) {
+        if (query.isBlank()) {
+            buildFlatGroupList(selectableGroups, expandedIds)
+        } else {
+            // Con búsqueda activa: mostramos solo coincidencias + sus ancestros, ya expandidos.
+            buildFlatGroupList(selectableGroups, expandedIds)
+                .filter { (group, _) ->
+                    group.description.contains(query, ignoreCase = true) ||
+                            visibleGroups.any { it.parentId == group.id } ||
+                            searchExpandedIds.contains(group.id)
+                }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.categories_search_group)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                if (allowNoParent) {
+                    TextButton(
+                        onClick = { onSelectNoParent?.invoke() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.categories_no_parent))
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                }
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    if (flatList.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.categories_search_no_results),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 16.dp)
+                        )
+                    }
+                    flatList.forEach { (group, level) ->
+                        val hasChildren = selectableGroups.any { it.parentId == group.id }
+                        val isExpanded = group.id in expandedIds
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (hasChildren && query.isBlank()) {
+                                        manuallyExpanded = if (isExpanded)
+                                            manuallyExpanded - group.id!!
+                                        else
+                                            manuallyExpanded + group.id!!
+                                    } else {
+                                        onSelect(group)
+                                    }
+                                }
+                                .padding(start = (level * 16).dp, top = 8.dp, bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (hasChildren) {
+                                Icon(
+                                    imageVector = if (isExpanded) Icons.Filled.KeyboardArrowDown
+                                    else Icons.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            } else {
+                                Spacer(modifier = Modifier.width(24.dp))
+                            }
+                            Text(
+                                text = group.description,
+                                style = if (hasChildren) MaterialTheme.typography.titleSmall
+                                else MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (!hasChildren) {
+                                TextButton(onClick = { onSelect(group) }) {
+                                    Text(stringResource(R.string.dialog_confirm))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        }
+    )
+}
+
 @Composable
 fun GroupsTab(
     groups: List<CategoryGroup>,
@@ -377,37 +526,20 @@ fun GroupDialog(
     )
 
     if (showParentPicker) {
-        AlertDialog(
-            onDismissRequest = { showParentPicker = false },
-            title = { Text("Selecciona grupo padre") },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    Button(
-                        onClick = {
-                            parentId = null
-                            showParentPicker = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Sin padre (raíz)")
-                    }
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                    groups.filter { it.id != group?.id }.forEach { g ->
-                        TextButton(
-                            onClick = {
-                                parentId = g.id
-                                showParentPicker = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(g.description)
-                        }
-                    }
-                }
+        GroupPickerDialog(
+            title = "Selecciona grupo padre",
+            groups = groups,
+            excludeId = group?.id,
+            allowNoParent = true,
+            onSelectNoParent = {
+                parentId = null
+                showParentPicker = false
             },
-            confirmButton = {}
+            onSelect = {
+                parentId = it.id
+                showParentPicker = false
+            },
+            onDismiss = { showParentPicker = false }
         )
     }
 
@@ -756,27 +888,14 @@ fun RuleDialog(
     }
 
     if (showGroupPicker) {
-        AlertDialog(
-            onDismissRequest = { showGroupPicker = false },
-            title = { Text("Selecciona grupo") },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    groups.forEach { g ->
-                        TextButton(
-                            onClick = {
-                                groupId = g.id ?: 0
-                                showGroupPicker = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(g.description)
-                        }
-                    }
-                }
+        GroupPickerDialog(
+            title = "Selecciona grupo",
+            groups = groups,
+            onSelect = {
+                groupId = it.id ?: 0
+                showGroupPicker = false
             },
-            confirmButton = {}
+            onDismiss = { showGroupPicker = false }
         )
     }
 }
@@ -976,27 +1095,14 @@ fun ExceptionDialog(
     )
 
     if (showGroupPicker) {
-        AlertDialog(
-            onDismissRequest = { showGroupPicker = false },
-            title = { Text("Selecciona grupo") },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState())
-                ) {
-                    groups.forEach { g ->
-                        TextButton(
-                            onClick = {
-                                groupId = g.id ?: 0
-                                showGroupPicker = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(g.description)
-                        }
-                    }
-                }
+        GroupPickerDialog(
+            title = "Selecciona grupo",
+            groups = groups,
+            onSelect = {
+                groupId = it.id ?: 0
+                showGroupPicker = false
             },
-            confirmButton = {}
+            onDismiss = { showGroupPicker = false }
         )
     }
 }

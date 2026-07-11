@@ -102,6 +102,9 @@
     <string name="categories_empty">No hay categorías</string>
     <string name="categories_rules_empty">No hay reglas</string>
     <string name="categories_exceptions_empty">No hay excepciones</string>
+    <string name="categories_search_group">Buscar categoría...</string>
+    <string name="categories_no_parent">Sin padre (raíz)</string>
+    <string name="categories_search_no_results">Sin resultados</string>
 
     <!-- Ajustes -->
     <string name="settings_title">Ajustes</string>

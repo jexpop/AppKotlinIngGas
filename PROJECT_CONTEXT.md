@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.9 (`versionCode = 9`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.10 (`versionCode = 10`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -129,6 +129,25 @@ ImportScreen (Compose)
 
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
+
+### 5.2.3 Selector de Grupo en Árbol con Buscador (v1.0.10+)
+
+**Funcionalidad**: Selector de `category_group` en forma de árbol expandible/colapsable con buscador, sustituyendo los antiguos diálogos de lista plana (difíciles de recorrer con muchos grupos).
+
+**Implementación** (`ui/screens/categories/CategoriesScreen.kt`):
+- `GroupPickerDialog(title, groups, excludeId, allowNoParent, onSelectNoParent, onSelect, onDismiss)`: composable reutilizable.
+  - Árbol colapsado por defecto (solo raíces visibles), reutiliza `buildFlatGroupList()`.
+  - `findAncestorIdsForQuery(groups, query)`: nueva función que devuelve los ids de todos los ancestros de los grupos cuya `description` contiene `query`, recorriendo `parentId` hacia arriba. Se usa para auto-expandir solo las ramas relevantes al buscar.
+  - Nodos con hijos → expanden/colapsan al click; hojas → seleccionan al click o vía botón "Confirmar" de su fila. Con búsqueda activa, cualquier resultado es seleccionable directamente.
+  - `excludeId`: evita listar el propio grupo como su padre (usado en el parent picker de `GroupDialog`).
+  - `allowNoParent` + `onSelectNoParent`: añade la opción "Sin padre (raíz)" arriba del árbol (solo en el parent picker).
+- **Usos**: `GroupDialog` (grupo padre), `RuleDialog` (grupo de regla de categorización), `ExceptionDialog` (grupo de excepción manual). Los 3 sustituyen su antiguo `AlertDialog` + `TextButton` por grupo.
+- Sin cambios en `CategoriesViewModel` ni en Supabase: opera en memoria sobre la `List<CategoryGroup>` ya cargada.
+
+**Strings** (`strings.xml`):
+- `categories_search_group`: "Buscar categoría..."
+- `categories_no_parent`: "Sin padre (raíz)"
+- `categories_search_no_results`: "Sin resultados"
 
 ### 5.2.2 Copiar Concepto en Detalles de Movimiento (v1.0.8+)
 
@@ -421,4 +440,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-10 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.9 | Última sync: Fix filtro "Sin categoría" con exact() (paginación); contador de movimientos con total real vía count(Count.EXACT)*
+*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.10 | Última sync: Selector de grupo en árbol con buscador (GroupPickerDialog) para RuleDialog/ExceptionDialog/GroupDialog*
