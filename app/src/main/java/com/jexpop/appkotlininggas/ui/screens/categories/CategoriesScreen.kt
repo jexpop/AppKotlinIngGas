@@ -5,6 +5,7 @@ package com.jexpop.appkotlininggas.ui.screens.categories
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -677,6 +678,27 @@ fun RulesTab(
     }
 }
 
+/**
+ * Filtra reglas automáticas por texto libre (value1..4 + nombre de grupo) y,
+ * opcionalmente, por rule_type. Ambos filtros se combinan con AND.
+ */
+private fun filterRules(
+    rules: List<CategorizationRule>,
+    groups: List<CategoryGroup>,
+    query: String,
+    ruleTypeFilter: Int?
+): List<CategorizationRule> {
+    val byGroupId = groups.associateBy { it.id }
+    return rules.filter { rule ->
+        val matchesType = ruleTypeFilter == null || rule.rule_type == ruleTypeFilter
+        if (!matchesType) return@filter false
+        if (query.isBlank()) return@filter true
+        val groupName = byGroupId[rule.group_id]?.description ?: ""
+        listOfNotNull(rule.value1, rule.value2, rule.value3, rule.value4, groupName)
+            .any { it.contains(query, ignoreCase = true) }
+    }
+}
+
 @Composable
 fun AutoRulesTab(
     rules: List<CategorizationRule>,
@@ -688,6 +710,12 @@ fun AutoRulesTab(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var editingRule by remember { mutableStateOf<CategorizationRule?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var ruleTypeFilter by remember { mutableStateOf<Int?>(null) }
+
+    val filteredRules = remember(rules, groups, searchQuery, ruleTypeFilter) {
+        filterRules(rules, groups, searchQuery, ruleTypeFilter)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (rules.isEmpty()) {
@@ -698,22 +726,65 @@ fun AutoRulesTab(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(rules) { rule ->
-                    RuleItem(
-                        rule = rule,
-                        groups = groups,
-                        ruleTypes = ruleTypes,
-                        onEdit = {
-                            editingRule = it
-                            showDialog = true
-                        },
-                        onDelete = { rule.id?.let { id -> onDelete(id) } }
+            Column(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text(stringResource(R.string.categories_search_rule)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = ruleTypeFilter == null,
+                            onClick = { ruleTypeFilter = null },
+                            label = { Text(stringResource(R.string.categories_filter_all)) }
+                        )
+                        ruleTypes.forEach { rt ->
+                            FilterChip(
+                                selected = ruleTypeFilter == rt.id,
+                                onClick = {
+                                    ruleTypeFilter = if (ruleTypeFilter == rt.id) null else rt.id
+                                },
+                                label = { Text(rt.description) }
+                            )
+                        }
+                    }
+                }
+
+                if (filteredRules.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            stringResource(R.string.categories_search_no_results),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredRules, key = { it.id ?: 0 }) { rule ->
+                            RuleItem(
+                                rule = rule,
+                                groups = groups,
+                                ruleTypes = ruleTypes,
+                                onEdit = {
+                                    editingRule = it
+                                    showDialog = true
+                                },
+                                onDelete = { rule.id?.let { id -> onDelete(id) } }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -967,6 +1038,23 @@ fun RuleDialog(
     }
 }
 
+/**
+ * Filtra excepciones manuales por texto libre (value1, value2 + nombre de grupo).
+ */
+private fun filterExceptions(
+    exceptions: List<CategorizationException>,
+    groups: List<CategoryGroup>,
+    query: String
+): List<CategorizationException> {
+    if (query.isBlank()) return exceptions
+    val byGroupId = groups.associateBy { it.id }
+    return exceptions.filter { exception ->
+        val groupName = byGroupId[exception.group_id]?.description ?: ""
+        listOfNotNull(exception.value1, exception.value2, groupName)
+            .any { it.contains(query, ignoreCase = true) }
+    }
+}
+
 @Composable
 fun ExceptionsTab(
     exceptions: List<CategorizationException>,
@@ -977,6 +1065,11 @@ fun ExceptionsTab(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var editingException by remember { mutableStateOf<CategorizationException?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredExceptions = remember(exceptions, groups, searchQuery) {
+        filterExceptions(exceptions, groups, searchQuery)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (exceptions.isEmpty()) {
@@ -987,21 +1080,42 @@ fun ExceptionsTab(
                 )
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(exceptions) { exception ->
-                    ExceptionItem(
-                        exception = exception,
-                        groups = groups,
-                        onEdit = {
-                            editingException = it
-                            showDialog = true
-                        },
-                        onDelete = { exception.id?.let { id -> onDelete(id) } }
-                    )
+            Column(modifier = Modifier.fillMaxSize()) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text(stringResource(R.string.categories_search_exception)) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                if (filteredExceptions.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            stringResource(R.string.categories_search_no_results),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(filteredExceptions, key = { it.id ?: 0 }) { exception ->
+                            ExceptionItem(
+                                exception = exception,
+                                groups = groups,
+                                onEdit = {
+                                    editingException = it
+                                    showDialog = true
+                                },
+                                onDelete = { exception.id?.let { id -> onDelete(id) } }
+                            )
+                        }
+                    }
                 }
             }
         }

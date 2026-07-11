@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.12 (`versionCode = 12`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.13 (`versionCode = 13`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -129,6 +129,18 @@ ImportScreen (Compose)
 
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
+
+### 5.2.6 Buscador y Filtro en Reglas y Excepciones (v1.0.13+)
+
+**Problema**: el listado de reglas automáticas y excepciones manuales crece con el uso y se vuelve difícil de recorrer visualmente para encontrar un registro concreto.
+
+**Fix** (`ui/screens/categories/CategoriesScreen.kt`):
+- `AutoRulesTab`: `OutlinedTextField` de búsqueda + fila de `FilterChip` por `rule_type` (más un chip "Todos" para limpiar el filtro). Ambos se combinan con AND vía la nueva función `filterRules(rules, groups, query, ruleTypeFilter)`, que busca en `value1..4` + nombre del grupo asociado (contains, ignoreCase). Tocar un chip ya seleccionado lo deselecciona (vuelve a "Todos").
+- `ExceptionsTab`: `OutlinedTextField` de búsqueda con la nueva función `filterExceptions(exceptions, groups, query)`, que busca en `value1`, `value2` + nombre del grupo. Sin filtro de tipo (las excepciones no tienen `rule_type`).
+- Ambos filtrados son en memoria sobre las listas ya cargadas (`rules`, `exceptions` del `CategoriesViewModel`); no hay llamadas nuevas a Supabase ni cambios en el ViewModel.
+- Sin resultados → reutiliza el string `categories_search_no_results` (introducido en 5.2.3).
+
+**Strings** (`strings.xml`): `categories_search_rule` ("Buscar regla..."), `categories_search_exception` ("Buscar excepción..."), `categories_filter_all` ("Todos").
 
 ### 5.2.5 Confirmación de Borrado (v1.0.12+)
 
@@ -463,4 +475,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.12 | Última sync: Confirmación de borrado (ConfirmDeleteDialog) en grupos, reglas automáticas y excepciones manuales*
+*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.13 | Última sync: Buscador y filtro por tipo en Reglas automáticas y Excepciones manuales (CategoriesScreen.kt)

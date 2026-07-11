@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.13] - 2026-07-11
+
+### Added
+- **Buscador y filtro en Reglas y Excepciones** (`ui/screens/categories/CategoriesScreen.kt`): con el crecimiento del listado, encontrar una regla o excepción concreta se había vuelto complicado.
+  - `AutoRulesTab`: nuevo `OutlinedTextField` de búsqueda + fila de `FilterChip` por `rule_type` (incluye chip "Todos"). Nueva función `filterRules()`: combina texto libre (`value1..4` + nombre de grupo, contains ignoreCase) con el tipo seleccionado (AND). Tocar un chip ya activo lo deselecciona.
+  - `ExceptionsTab`: nuevo `OutlinedTextField` de búsqueda. Nueva función `filterExceptions()`: filtra por `value1`, `value2` + nombre de grupo.
+  - Ambos filtrados operan en memoria sobre las listas ya cargadas (`rules`, `exceptions`); sin cambios en `CategoriesViewModel` ni llamadas adicionales a Supabase.
+  - Si el filtro no da resultados, se reutiliza el string `categories_search_no_results` (introducido en v1.0.10).
+
+### Strings (`strings.xml`)
+- Nuevas claves: `categories_search_rule` ("Buscar regla..."), `categories_search_exception` ("Buscar excepción..."), `categories_filter_all` ("Todos").
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.13` (`versionCode = 13`).
+
+---
+
 ## [1.0.12] - 2026-07-11
 
 ### Added
