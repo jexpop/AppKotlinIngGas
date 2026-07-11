@@ -97,9 +97,31 @@ class TransactionsViewModel(
         return periodRepository.getCurrentMonth().getOrNull()
     }
 
-    private suspend fun loadMonths() {
+    /**
+     * Recarga la lista de meses disponibles para el combo de filtros.
+     * Pública para poder invocarla tras operaciones que puedan crear un mes
+     * nuevo en la base de datos (p. ej. una importación de CSV), sin depender
+     * de reiniciar la app (que era lo único que antes disparaba init{}).
+     */
+    suspend fun loadMonths() {
         periodRepository.getAllMonths()
             .onSuccess { _months.value = it }
+    }
+
+    /**
+     * Refresco a llamar tras una importación correcta. A diferencia de
+     * loadTransactions(reset = true) por sí solo, también recarga el combo
+     * de meses por si la importación ha creado un mes nuevo en la BD que
+     * antes no existía, y actualiza el mes seleccionado al nuevo mes
+     * "current" (ImportCsvUseCase llama a periodRepository.setCurrentMonth()
+     * durante la importación, pero antes solo se leía una vez en el init{}).
+     */
+    fun refreshAfterImport() {
+        viewModelScope.launch {
+            loadMonths()
+            _selectedMonth.value = getCurrentMonth()
+            loadTransactions(reset = true)
+        }
     }
 
     fun loadTransactions(reset: Boolean = false) {

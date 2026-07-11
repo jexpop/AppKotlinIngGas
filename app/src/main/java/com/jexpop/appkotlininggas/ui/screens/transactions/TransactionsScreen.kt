@@ -74,11 +74,16 @@ fun TransactionsScreen(
         }
     }
 
+    // Refresco tras importar: además de recargar las transacciones, recarga el
+    // combo de meses (refreshAfterImport), por si la importación ha creado un
+    // mes nuevo que aún no existía en la base de datos. Antes solo se llamaba
+    // a loadTransactions(reset = true), por lo que el combo de meses se
+    // quedaba desactualizado hasta reiniciar la app.
     val refreshTick by TransactionsRefreshBus.refreshTick.collectAsState()
     LaunchedEffect(refreshTick) {
         if (refreshTick > 0L) {
             expandedTransactionKey = null
-            viewModel.loadTransactions(reset = true)
+            viewModel.refreshAfterImport()
         }
     }
 

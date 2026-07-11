@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.11] - 2026-07-11
+
+### Fixed
+- **Selección de grupos padre en el árbol** (`ui/screens/categories/CategoriesScreen.kt`): En `GroupPickerDialog` (introducido en 1.0.10), el click sobre una fila con hijos solo expandía/colapsaba y nunca permitía seleccionar ese grupo como destino; solo era posible seleccionar un nodo padre buscándolo por texto. Se separan ahora las dos acciones dentro de cada fila: el icono ▶/▼ es una zona clicable independiente solo para expandir/colapsar (`Box` de 40dp), y el resto de la fila (texto + botón "Confirmar") selecciona el grupo, tenga hijos o no. Aplica tanto al árbol normal como a los resultados de búsqueda.
+- **Combo de meses no se refrescaba tras importar** (`ui/screens/transactions/TransactionsViewModel.kt`, `TransactionsScreen.kt`): Encadenados dos bugs relacionados:
+  1. `loadMonths()` era `private` y solo se invocaba una vez, en `loadInitialData()` dentro de `init{}`. El refresco automático tras una importación (`TransactionsRefreshBus.refreshTick`, ver v1.0.5) solo llamaba a `loadTransactions(reset = true)`, nunca a `loadMonths()`, así que un mes nuevo creado durante la importación no aparecía en el combo de filtros hasta reiniciar la app.
+     - `loadMonths()` pasa a ser `suspend fun` pública.
+     - Nueva `TransactionsViewModel.refreshAfterImport()`: recarga meses + transacciones en una sola llamada.
+     - `TransactionsScreen.kt`: el `LaunchedEffect(refreshTick)` pasa de llamar a `loadTransactions(reset = true)` a llamar a `refreshAfterImport()`.
+  2. Aun con el mes ya visible en el combo, no aparecía preseleccionado como filtro activo. `ImportCsvUseCase.execute()` marca el mes importado como `current` en BD (`periodRepository.setCurrentMonth()`), pero `TransactionsViewModel` solo leía ese flag una vez, también en `init{}` (`_selectedMonth.value = getCurrentMonth()`), y `refreshAfterImport()` no lo volvía a consultar.
+     - `refreshAfterImport()`: ahora también reasigna `_selectedMonth.value = getCurrentMonth()` antes de recargar transacciones, para reflejar el nuevo mes `current` marcado durante la importación.
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.11` (`versionCode = 11`).
+
+---
+
 ## [1.0.10] - 2026-07-11
 
 ### Added

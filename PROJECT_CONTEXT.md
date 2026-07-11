@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.10 (`versionCode = 10`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.11 (`versionCode = 11`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -130,6 +130,19 @@ ImportScreen (Compose)
 **Extensibilidad**: Añadir parser → implementar `CsvParserStrategy` + registrar en `CsvFormatDetector.parsers`.  
 **Pendiente**: Registro dinámico por `bank.code`.
 
+### 5.2.4 Refresco de Meses tras Importar (v1.0.11+)
+
+**Problema**: tras importar un CSV que creaba un mes nuevo en `period_month` (o cambiaba cuál es el mes `current`), el combo de filtro de meses en Movimientos no se actualizaba hasta reiniciar la app.
+
+**Causa (2 bugs encadenados)**:
+1. `TransactionsViewModel.loadMonths()` era `private` y solo se llamaba una vez, en `init{}` → `loadInitialData()`. El refresco automático tras importar (`TransactionsRefreshBus.refreshTick`, ver 5.2.1) solo invocaba `loadTransactions(reset = true)`, nunca `loadMonths()`.
+2. Aun viendo el mes en el combo, no salía preseleccionado: `ImportCsvUseCase.execute()` marca el mes importado como `current` en BD vía `PeriodRepository.setCurrentMonth()`, pero `_selectedMonth` en el ViewModel solo se leía una vez, también en `init{}`.
+
+**Fix** (`ui/screens/transactions/TransactionsViewModel.kt`, `TransactionsScreen.kt`):
+- `loadMonths()`: pasa de `private` a `suspend fun` pública.
+- Nueva `refreshAfterImport()`: recarga `loadMonths()` + reasigna `_selectedMonth.value = getCurrentMonth()` (lee el flag `current` recién actualizado) + `loadTransactions(reset = true)`, todo en una llamada.
+- `TransactionsScreen.kt`: el `LaunchedEffect(refreshTick)` pasa de llamar `viewModel.loadTransactions(reset = true)` a llamar `viewModel.refreshAfterImport()`.
+
 ### 5.2.3 Selector de Grupo en Árbol con Buscador (v1.0.10+)
 
 **Funcionalidad**: Selector de `category_group` en forma de árbol expandible/colapsable con buscador, sustituyendo los antiguos diálogos de lista plana (difíciles de recorrer con muchos grupos).
@@ -138,7 +151,7 @@ ImportScreen (Compose)
 - `GroupPickerDialog(title, groups, excludeId, allowNoParent, onSelectNoParent, onSelect, onDismiss)`: composable reutilizable.
   - Árbol colapsado por defecto (solo raíces visibles), reutiliza `buildFlatGroupList()`.
   - `findAncestorIdsForQuery(groups, query)`: nueva función que devuelve los ids de todos los ancestros de los grupos cuya `description` contiene `query`, recorriendo `parentId` hacia arriba. Se usa para auto-expandir solo las ramas relevantes al buscar.
-  - Nodos con hijos → expanden/colapsan al click; hojas → seleccionan al click o vía botón "Confirmar" de su fila. Con búsqueda activa, cualquier resultado es seleccionable directamente.
+  - Nodos con hijos → **icono ▶/▼ clicable independiente** (zona de 40dp) para expandir/colapsar; el resto de la fila (texto + botón "Confirmar") selecciona el grupo, sea padre u hoja. *(Fix v1.0.11: antes el click en toda la fila con hijos solo expandía y era imposible seleccionar un grupo padre salvo buscándolo por texto)*.
   - `excludeId`: evita listar el propio grupo como su padre (usado en el parent picker de `GroupDialog`).
   - `allowNoParent` + `onSelectNoParent`: añade la opción "Sin padre (raíz)" arriba del árbol (solo en el parent picker).
 - **Usos**: `GroupDialog` (grupo padre), `RuleDialog` (grupo de regla de categorización), `ExceptionDialog` (grupo de excepción manual). Los 3 sustituyen su antiguo `AlertDialog` + `TextButton` por grupo.
@@ -440,4 +453,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.10 | Última sync: Selector de grupo en árbol con buscador (GroupPickerDialog) para RuleDialog/ExceptionDialog/GroupDialog*
+*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.11 | Última sync: Fix selección de nodos padre en árbol de grupos (GroupPickerDialog); fix refresco de combo de meses y mes current tras importar CSV (refreshAfterImport)*

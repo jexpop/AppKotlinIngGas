@@ -217,37 +217,46 @@ fun GroupPickerDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    if (hasChildren && query.isBlank()) {
-                                        manuallyExpanded = if (isExpanded)
-                                            manuallyExpanded - group.id!!
-                                        else
-                                            manuallyExpanded + group.id!!
-                                    } else {
-                                        onSelect(group)
-                                    }
-                                }
-                                .padding(start = (level * 16).dp, top = 8.dp, bottom = 8.dp),
+                                .padding(start = (level * 16).dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (hasChildren) {
-                                Icon(
-                                    imageVector = if (isExpanded) Icons.Filled.KeyboardArrowDown
-                                    else Icons.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
+                            // Zona de expandir/colapsar: acción independiente de la selección.
+                            if (hasChildren && query.isBlank()) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clickable {
+                                            manuallyExpanded = if (isExpanded)
+                                                manuallyExpanded - group.id!!
+                                            else
+                                                manuallyExpanded + group.id!!
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isExpanded) Icons.Filled.KeyboardArrowDown
+                                        else Icons.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
                             } else {
-                                Spacer(modifier = Modifier.width(24.dp))
+                                Spacer(modifier = Modifier.size(40.dp))
                             }
-                            Text(
-                                text = group.description,
-                                style = if (hasChildren) MaterialTheme.typography.titleSmall
-                                else MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            if (!hasChildren) {
+                            // Zona de selección: siempre selecciona el grupo, sea padre u hoja.
+                            Row(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onSelect(group) }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = group.description,
+                                    style = if (hasChildren) MaterialTheme.typography.titleSmall
+                                    else MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
                                 TextButton(onClick = { onSelect(group) }) {
                                     Text(stringResource(R.string.dialog_confirm))
                                 }
