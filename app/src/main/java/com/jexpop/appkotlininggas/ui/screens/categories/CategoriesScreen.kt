@@ -859,6 +859,13 @@ fun RuleItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                if (rule.range_start != null || rule.range_end != null) {
+                    Text(
+                        text = "Rango: ${rule.range_start ?: 18}-${rule.range_end ?: 30}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             IconButton(onClick = { onEdit(rule) }) {
                 Icon(Icons.Filled.Edit, contentDescription = null)
@@ -892,6 +899,8 @@ fun RuleDialog(
     var value2 by remember { mutableStateOf(rule?.value2 ?: "") }
     var value3 by remember { mutableStateOf(rule?.value3 ?: "") }
     var value4 by remember { mutableStateOf(rule?.value4 ?: "") }
+    var rangeStart by remember { mutableStateOf(rule?.range_start?.toString() ?: "") }
+    var rangeEnd by remember { mutableStateOf(rule?.range_end?.toString() ?: "") }
     var showGroupPicker by remember { mutableStateOf(false) }
     var showRuleTypePicker by remember { mutableStateOf(false) }
 
@@ -953,6 +962,35 @@ fun RuleDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+                if (ruleType in listOf(4, 7)) {
+                    Text(
+                        text = "Rango de posiciones (opcional, por defecto 18-30)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = rangeStart,
+                            onValueChange = { rangeStart = it.filter { c -> c.isDigit() } },
+                            label = { Text("Inicio") },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = rangeEnd,
+                            onValueChange = { rangeEnd = it.filter { c -> c.isDigit() } },
+                            label = { Text("Fin") },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                            ),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
                 if (ruleType in listOf(5, 6, 7)) {
                     OutlinedTextField(
                         value = value3,
@@ -984,7 +1022,9 @@ fun RuleDialog(
                             value1 = value1.takeIf { it.isNotBlank() },
                             value2 = value2.takeIf { it.isNotBlank() },
                             value3 = value3.takeIf { it.isNotBlank() },
-                            value4 = value4.takeIf { it.isNotBlank() }
+                            value4 = value4.takeIf { it.isNotBlank() },
+                            range_start = if (ruleType in listOf(4, 7)) rangeStart.toIntOrNull() else null,
+                            range_end = if (ruleType in listOf(4, 7)) rangeEnd.toIntOrNull() else null
                         )
                     )
                 },

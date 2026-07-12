@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.13 (`versionCode = 13`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.14 (`versionCode = 14`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -229,17 +229,23 @@ ImportScreen (Compose)
 |------|--------|------------|
 | 1 | Texto completo = value1 | value1 |
 | 2 | Primeros 15 chars contienen value1 | value1 |
-| 4 | Primeros 3 chars = value1 **Y** pos 18-30 contiene value2 | value1, value2 |
+| 4 | Primeros 3 chars = value1 **Y** rango de posiciones contiene value2 | value1, value2, range_start/range_end (opcionales) |
 | 5 | Primeros 3 chars = value1 **Y** importe >/< value2 | value1, value2 (num), value3 (>,<,>=,<=) |
 | 6 | Primeros 20 chars contienen value1 **Y** importe entre value2-value3 | value1, value2 (min), value3 (max) |
-| 7 | Primeros 3 = value1 **Y** pos 18-30 contiene value2 **Y** importe entre value3-value4 | value1, value2, value3 (min), value4 (max) |
+| 7 | Primeros 3 = value1 **Y** rango de posiciones contiene value2 **Y** importe entre value3-value4 | value1, value2, value3 (min), value4 (max), range_start/range_end (opcionales) |
 | 99 | Es tarjeta crédito (payment_type == "C") | — |
 
 **Orden**: Excepciones manuales (por mes) → Reglas automáticas (orden BD).
 
 **Notas técnicas** (v1.0.6+):
-- **Tipos 4 y 7** (posiciones 18-30): Extracción segura con validación de longitud (`concept.length > 17`). Posiciones en numeración de usuario (1-basada): 18-30 → índices 0-basados: 17-30 → `substring(17, minOf(31, length))`.
 - **Tipo 6** (primeros 20 chars): Requiere concepto con al menos 20 caracteres para evitar falsos positivos.
+
+**Rango de posiciones configurable por regla** (v1.0.14+, tipos 4 y 7):
+- `CategorizationRule.range_start` / `range_end` (`Int?`, numeración de usuario 1-based, inclusive). `NULL` en ambos → usa el rango por defecto `DEFAULT_RANGE_START = 18` / `DEFAULT_RANGE_END = 30` (comportamiento fijo previo a esta versión).
+- Extracción vía `CategorizationUseCase.extractRange(concept, rule)`: convierte a índice 0-based (`start - 1`), valida límites (`startIndex >= 0 && startIndex < concept.length`, `end >= start`) y hace `substring(startIndex, minOf(end, concept.length))`.
+- Motivo: el rango fijo 18-30 no cubría todos los formatos de concepto reales de los bancos; ahora cada regla puede definir su propio rango en el formulario (`RuleDialog`, campos "Inicio"/"Fin", solo visibles para tipos 4 y 7).
+- `RulesRepository.updateRule()` escribe `range_start`/`range_end` incondicionalmente (a diferencia de `value2..4`), para poder persistir su borrado y volver al rango por defecto.
+- Migración requerida: `alter table categorization_rule add column range_start int, add column range_end int` (ver `migration_range_columns.sql`).
 
 ## 5.3 Cifrado (data/EncryptionManager)
 
@@ -385,7 +391,9 @@ create table categorization_rule (
   id serial primary key,
   rule_type int not null, -- 1,2,4,5,6,7,99
   group_id int not null references category_group(id),
-  value1 text, value2 text, value3 text, value4 text
+  value1 text, value2 text, value3 text, value4 text,
+  range_start int, -- posición inicial (1-based, tipos 4/7). NULL = 18 por defecto
+  range_end int -- posición final inclusive (1-based, tipos 4/7). NULL = 30 por defecto
 );
 
 create table categorization_exception (
@@ -475,4 +483,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-11 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.13 | Última sync: Buscador y filtro por tipo en Reglas automáticas y Excepciones manuales (CategoriesScreen.kt)
+*Generado: 2025-07-06 | Actualizado: 2026-07-12 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.14 | Última sync: Rango de posiciones configurable por regla (range_start/range_end) en reglas automáticas tipo 4 y 7 (CategorizationUseCase.kt, CategorizationRepository.kt, RulesRepository.kt, CategoriesScreen.kt)

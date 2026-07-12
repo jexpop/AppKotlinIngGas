@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.14] - 2026-07-12
+
+### Added
+- **Rango de posiciones personalizable en reglas automáticas** (`domain/usecase/CategorizationUseCase.kt`, `data/repository/CategorizationRepository.kt`, `data/repository/RulesRepository.kt`, `ui/screens/categories/CategoriesScreen.kt`): las reglas tipo 4 y 7 usaban un rango fijo de posiciones 18-30 dentro del concepto (ver v1.0.6), lo que no cubría todos los formatos de concepto reales.
+  - `CategorizationRule`: nuevas propiedades `range_start: Int?` y `range_end: Int?` (numeración de usuario, 1-based, inclusive). `NULL` en ambos = comportamiento por defecto sin cambios (18-30), así que las reglas ya creadas siguen funcionando igual sin migrarlas.
+  - `CategorizationUseCase`: nueva función `extractRange(concept, rule)` sustituye el `substring(17, minOf(31, concept.length))` fijo anterior; usa `rule.range_start`/`rule.range_end` con fallback a las constantes `DEFAULT_RANGE_START = 18` / `DEFAULT_RANGE_END = 30`. Aplicado en `matchFirst3AndPositions` (tipo 4) y `matchFirst3PositionsWithAmount` (tipo 7).
+  - `RulesRepository.updateRule()`: `range_start`/`range_end` se escriben siempre en el `update` (a diferencia de `value2..4`, que solo se escriben si no son `null`), para poder persistir la vuelta al rango por defecto quitando un rango personalizado.
+  - `RuleDialog` (`CategoriesScreen.kt`): dos nuevos `OutlinedTextField` numéricos ("Inicio"/"Fin"), visibles solo para tipos de regla 4 y 7, con teclado numérico y filtrado de caracteres no numéricos.
+  - `RuleItem`: muestra "Rango: X-Y" en la tarjeta cuando la regla tiene un rango personalizado definido.
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.14` (`versionCode = 14`).
+
+### Migration
+- Nueva migración SQL (`migration_range_columns.sql`): añade columnas `range_start` y `range_end` (nullables) a `categorization_rule`. Debe ejecutarse en Supabase antes de desplegar esta versión.
+
+---
+
 ## [1.0.13] - 2026-07-11
 
 ### Added

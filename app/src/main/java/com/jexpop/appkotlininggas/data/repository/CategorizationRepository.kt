@@ -22,7 +22,11 @@ data class CategorizationRule(
     val value1: String? = null,
     val value2: String? = null,
     val value3: String? = null,
-    val value4: String? = null
+    val value4: String? = null,
+    // Rango de posiciones (numeración de usuario, 1-based, inclusive) usado por los
+    // tipos de regla 4 y 7. NULL = usa el rango por defecto 18-30 en CategorizationUseCase.
+    val range_start: Int? = null,
+    val range_end: Int? = null
 )
 
 class CategorizationRepository {

@@ -9,6 +9,14 @@ class CategorizationUseCase(
     private val repository: CategorizationRepository = CategorizationRepository()
 ) {
 
+    companion object {
+        // Rango por defecto (numeración de usuario, 1-based) cuando la regla no
+        // define range_start/range_end propios. Mantiene el comportamiento previo
+        // a la v1.0.14 para reglas ya existentes.
+        private const val DEFAULT_RANGE_START = 18
+        private const val DEFAULT_RANGE_END = 30
+    }
+
     suspend fun categorize(
         transactions: List<Transaction>,
         month: String
@@ -70,19 +78,27 @@ class CategorizationUseCase(
         return rule.value1?.let { prefix.contains(it, ignoreCase = true) } == true
     }
 
-    // Tipo 4: primeros 3 chars + posiciones 18-30
+    /**
+     * Extrae el rango de texto configurado en la regla (numeración de usuario, 1-based,
+     * inclusive). Si la regla no define range_start/range_end, usa el rango por defecto
+     * 18-30 (comportamiento previo a la v1.0.14).
+     */
+    private fun extractRange(concept: String, rule: CategorizationRule): String {
+        val start = rule.range_start ?: DEFAULT_RANGE_START
+        val end = rule.range_end ?: DEFAULT_RANGE_END
+        // Numeración de usuario 1-based -> índice de código 0-based: restar 1 al inicio.
+        val startIndex = start - 1
+        if (startIndex < 0 || startIndex >= concept.length || end < start) return ""
+        val endIndex = minOf(end, concept.length)
+        return concept.substring(startIndex, endIndex)
+    }
+
+    // Tipo 4: primeros 3 chars + rango configurable (por defecto 18-30)
     private fun matchFirst3AndPositions(concept: String, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
-        // Posiciones 18-30 en numeración de usuario = índices 17-29 en código
-        // Extraer desde índice 17 hasta 30 (inclusive), que es substring(17, 31) pero limitado a length
-        val pos1830 = if (concept.length > 17) {
-            val endIndex = minOf(31, concept.length)
-            concept.substring(17, endIndex)
-        } else {
-            ""
-        }
+        val rangeText = extractRange(concept, rule)
         return rule.value1?.let { first3.equals(it, ignoreCase = true) } == true &&
-                rule.value2?.let { pos1830.contains(it, ignoreCase = true) } == true
+                rule.value2?.let { rangeText.contains(it, ignoreCase = true) } == true
     }
 
     // Tipo 5: primeros 3 chars + valor numérico de corte
@@ -112,21 +128,14 @@ class CategorizationUseCase(
                 amount >= min && amount <= max
     }
 
-    // Tipo 7: primeros 3 chars + posiciones 18-30 + rango de importe
+    // Tipo 7: primeros 3 chars + rango configurable (por defecto 18-30) + rango de importe
     private fun matchFirst3PositionsWithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
-        // Posiciones 18-30 en numeración de usuario = índices 17-29 en código
-        // Extraer desde índice 17 hasta 30 (inclusive), que es substring(17, 31) pero limitado a length
-        val pos1830 = if (concept.length > 17) {
-            val endIndex = minOf(31, concept.length)
-            concept.substring(17, endIndex)
-        } else {
-            ""
-        }
+        val rangeText = extractRange(concept, rule)
         val min = rule.value3?.toDoubleOrNull() ?: return false
         val max = rule.value4?.toDoubleOrNull() ?: return false
         return rule.value1?.let { first3.equals(it, ignoreCase = true) } == true &&
-                rule.value2?.let { pos1830.contains(it, ignoreCase = true) } == true &&
+                rule.value2?.let { rangeText.contains(it, ignoreCase = true) } == true &&
                 amount >= min && amount <= max
     }
 }

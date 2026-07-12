@@ -32,6 +32,12 @@ class RulesRepository {
                 rule.value2?.let { set("value2", it) }
                 rule.value3?.let { set("value3", it) }
                 rule.value4?.let { set("value4", it) }
+                // range_start/range_end SIEMPRE se escriben (a diferencia de value2..4,
+                // que solo se escriben si no son null): si el usuario quita un rango
+                // personalizado para volver al 18-30 por defecto, hay que poder
+                // persistir el null y no dejar el valor antiguo huérfano en BD.
+                set("range_start", rule.range_start)
+                set("range_end", rule.range_end)
             }) {
                 filter { eq("id", rule.id!!) }
             }
