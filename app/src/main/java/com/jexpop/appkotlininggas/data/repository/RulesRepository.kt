@@ -38,6 +38,7 @@ class RulesRepository {
                 // persistir el null y no dejar el valor antiguo huérfano en BD.
                 set("range_start", rule.range_start)
                 set("range_end", rule.range_end)
+                set("is_income", rule.is_income)
             }) {
                 filter { eq("id", rule.id!!) }
             }
@@ -74,7 +75,6 @@ class RulesRepository {
                 set("month", exception.month)
                 set("group_id", exception.group_id)
                 set("value1", exception.value1)
-                exception.value2?.let { set("value2", it) }
             }) {
                 filter { eq("id", exception.id!!) }
             }

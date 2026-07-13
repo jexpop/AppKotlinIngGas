@@ -866,6 +866,13 @@ fun RuleItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (rule.rule_type in listOf(5, 6, 7)) {
+                    Text(
+                        text = if (rule.is_income) "Solo ingresos" else "Solo gastos",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             IconButton(onClick = { onEdit(rule) }) {
                 Icon(Icons.Filled.Edit, contentDescription = null)
@@ -901,6 +908,7 @@ fun RuleDialog(
     var value4 by remember { mutableStateOf(rule?.value4 ?: "") }
     var rangeStart by remember { mutableStateOf(rule?.range_start?.toString() ?: "") }
     var rangeEnd by remember { mutableStateOf(rule?.range_end?.toString() ?: "") }
+    var isIncome by remember { mutableStateOf(rule?.is_income ?: false) }
     var showGroupPicker by remember { mutableStateOf(false) }
     var showRuleTypePicker by remember { mutableStateOf(false) }
 
@@ -1009,6 +1017,25 @@ fun RuleDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+                if (ruleType in listOf(5, 6, 7)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { isIncome = !isIncome }
+                    ) {
+                        Checkbox(checked = isIncome, onCheckedChange = { isIncome = it })
+                        Text(
+                            text = if (isIncome) "Ingreso (flow_type = H)" else "Gasto (flow_type = D)",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    Text(
+                        text = "El importe/rango se compara siempre en valor absoluto; esta casilla decide si la regla aplica a cargos (gasto, D) o a abonos (ingreso, H), según el tipo de movimiento.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         confirmButton = {
@@ -1024,7 +1051,8 @@ fun RuleDialog(
                             value3 = value3.takeIf { it.isNotBlank() },
                             value4 = value4.takeIf { it.isNotBlank() },
                             range_start = if (ruleType in listOf(4, 7)) rangeStart.toIntOrNull() else null,
-                            range_end = if (ruleType in listOf(4, 7)) rangeEnd.toIntOrNull() else null
+                            range_end = if (ruleType in listOf(4, 7)) rangeEnd.toIntOrNull() else null,
+                            is_income = if (ruleType in listOf(5, 6, 7)) isIncome else false
                         )
                     )
                 },
@@ -1079,7 +1107,7 @@ fun RuleDialog(
 }
 
 /**
- * Filtra excepciones manuales por texto libre (value1, value2 + nombre de grupo).
+ * Filtra excepciones manuales por texto libre (value1 + nombre de grupo).
  */
 private fun filterExceptions(
     exceptions: List<CategorizationException>,
@@ -1090,7 +1118,7 @@ private fun filterExceptions(
     val byGroupId = groups.associateBy { it.id }
     return exceptions.filter { exception ->
         val groupName = byGroupId[exception.group_id]?.description ?: ""
-        listOfNotNull(exception.value1, exception.value2, groupName)
+        listOfNotNull(exception.value1, groupName)
             .any { it.contains(query, ignoreCase = true) }
     }
 }
@@ -1245,7 +1273,6 @@ fun ExceptionDialog(
     var month by remember { mutableStateOf(exception?.month ?: "") }
     var groupId by remember { mutableStateOf(exception?.group_id ?: 0) }
     var value1 by remember { mutableStateOf(exception?.value1 ?: "") }
-    var value2 by remember { mutableStateOf(exception?.value2 ?: "") }
     var showGroupPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -1290,13 +1317,6 @@ fun ExceptionDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = value2,
-                    onValueChange = { value2 = it },
-                    label = { Text("Valor 2 (opcional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
@@ -1307,8 +1327,7 @@ fun ExceptionDialog(
                             id = exception?.id,
                             month = month,
                             group_id = groupId,
-                            value1 = value1.takeIf { it.isNotBlank() },
-                            value2 = value2.takeIf { it.isNotBlank() }
+                            value1 = value1.takeIf { it.isNotBlank() }
                         )
                     )
                 },

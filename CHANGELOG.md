@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.15] - 2026-07-12
+
+### Added
+- **Distinción gasto/ingreso en reglas por importe** (`domain/usecase/CategorizationUseCase.kt`, `data/repository/CategorizationRepository.kt`, `data/repository/RulesRepository.kt`, `ui/screens/categories/CategoriesScreen.kt`): las reglas tipo 5, 6 y 7 comparaban `value2`/`value3`/`value4` directamente contra `amount`, sin distinguir cargo de abono. Esto impedía usar la misma regla para conceptos idénticos que a veces son gasto y a veces ingreso, y en la práctica solo funcionaba de forma fiable para uno de los dos casos.
+  - `CategorizationRule`: nueva propiedad `is_income: Boolean = false`. `false` (por defecto) = la regla espera un gasto; `true` = espera un ingreso.
+  - `CategorizationUseCase`: nueva función `flowTypeMatches(flowType, isIncome)` compara `transaction.flowType` ("D"/"H") contra el tipo esperado por la regla — **no** el signo de `amount`, que no es una distinción fiable de gasto/ingreso en este modelo (`Transaction.flowType` es el campo real, separado de `amount`). El límite/rango (`value2`/`value3`/`value4` según el tipo) se compara siempre contra `abs(transaction.amount)`, así que se introduce como número positivo independientemente de si la regla es de gasto o de ingreso. Aplicado en `matchFirst3WithAmount` (tipo 5), `matchFirst20WithAmount` (tipo 6) y `matchFirst3PositionsWithAmount` (tipo 7).
+  - `RuleDialog`: nuevo `Checkbox` "Ingreso (flow_type = H)" / "Gasto (flow_type = D)", visible solo para tipos 5, 6 y 7.
+  - `RuleItem`: muestra "Solo ingresos" / "Solo gastos" en la tarjeta cuando aplica.
+  - `RulesRepository.updateRule()`: persiste `is_income` en cada actualización.
+
+### Removed
+- **`value2` de excepciones manuales** (`data/repository/CategorizationRepository.kt`, `data/repository/RulesRepository.kt`, `ui/screens/categories/CategoriesScreen.kt`): `CategorizationException.value2` se guardaba desde el formulario pero nunca se usaba en `CategorizationUseCase.findGroupId()` (que solo lee `value1`). Eliminado del modelo, de `updateException()`, de `ExceptionDialog` y del filtro de búsqueda (`filterExceptions()`) introducido en v1.0.13.
+
+### Changed
+- `app/build.gradle.kts`: versión de app actualizada a `1.0.15` (`versionCode = 15`).
+
+### Migration
+- Nueva migración SQL (`migration_income_flag_and_cleanup.sql`): añade `is_income boolean not null default false` a `categorization_rule` (las reglas existentes se comportan igual que antes, como gasto) y elimina la columna `value2` de `categorization_exception`. Debe ejecutarse en Supabase antes de desplegar esta versión.
+
+---
+
 ## [1.0.14] - 2026-07-12
 
 ### Added

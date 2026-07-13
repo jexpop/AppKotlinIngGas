@@ -10,8 +10,7 @@ data class CategorizationException(
     val id: Int? = null,
     val month: String,
     val group_id: Int,
-    val value1: String? = null,
-    val value2: String? = null
+    val value1: String? = null
 )
 
 @Serializable
@@ -26,7 +25,11 @@ data class CategorizationRule(
     // Rango de posiciones (numeración de usuario, 1-based, inclusive) usado por los
     // tipos de regla 4 y 7. NULL = usa el rango por defecto 18-30 en CategorizationUseCase.
     val range_start: Int? = null,
-    val range_end: Int? = null
+    val range_end: Int? = null,
+    // Signo esperado del importe para los tipos 5, 6 y 7 (que comparan contra value2/value3/value4).
+    // false (por defecto) = gasto (amount < 0). true = ingreso (amount > 0).
+    // El límite/rango se compara siempre contra el valor absoluto del importe.
+    val is_income: Boolean = false
 )
 
 class CategorizationRepository {

@@ -16,7 +16,7 @@
 
 **Stack**: Kotlin 2.0 + Compose BOM 2024.10 + AGP 8.7 + Supabase Kotlin 3.1 + Google Drive API v3 + Ktor 3.1 + KSP (serialization)
 
-**Versión actual de la app**: 1.0.14 (`versionCode = 14`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
+**Versión actual de la app**: 1.0.15 (`versionCode = 15`). La pantalla de Ajustes muestra `BuildConfig.VERSION_NAME`.
 
 ---
 
@@ -230,12 +230,14 @@ ImportScreen (Compose)
 | 1 | Texto completo = value1 | value1 |
 | 2 | Primeros 15 chars contienen value1 | value1 |
 | 4 | Primeros 3 chars = value1 **Y** rango de posiciones contiene value2 | value1, value2, range_start/range_end (opcionales) |
-| 5 | Primeros 3 chars = value1 **Y** importe >/< value2 | value1, value2 (num), value3 (>,<,>=,<=) |
-| 6 | Primeros 20 chars contienen value1 **Y** importe entre value2-value3 | value1, value2 (min), value3 (max) |
-| 7 | Primeros 3 = value1 **Y** rango de posiciones contiene value2 **Y** importe entre value3-value4 | value1, value2, value3 (min), value4 (max), range_start/range_end (opcionales) |
+| 5 | Primeros 3 chars = value1 **Y** \|importe\| >/< value2, con flow_type esperado | value1, value2 (num, abs), value3 (>,<,>=,<=), is_income |
+| 6 | Primeros 20 chars contienen value1 **Y** \|importe\| entre value2-value3, con flow_type esperado | value1, value2 (min, abs), value3 (max, abs), is_income |
+| 7 | Primeros 3 = value1 **Y** rango de posiciones contiene value2 **Y** \|importe\| entre value3-value4, con flow_type esperado | value1, value2, value3 (min, abs), value4 (max, abs), range_start/range_end (opcionales), is_income |
 | 99 | Es tarjeta crédito (payment_type == "C") | — |
 
-**Orden**: Excepciones manuales (por mes) → Reglas automáticas (orden BD).
+**Excepciones manuales**: solo usan `value1` (contains sobre `concept`). `value2` existió en el modelo hasta v1.0.14 pero nunca se usó en el matching; eliminado en v1.0.15.
+
+**Orden**: Excepciones manuales (por mes) → Reglas automáticas. ⚠️ `CategorizationRepository.getRules()` (el método real usado en el matching) **no ordena** la consulta a Supabase; el orden de evaluación no está garantizado por `rule_type`. Si dos reglas pudieran matchear la misma transacción, cuál gana depende del orden que devuelva Supabase por defecto, no del que se ve en la pantalla de Categorías (que sí usa `RulesRepository.getAllRules()`, ordenado). No es un problema mientras las reglas no se solapen, pero es una fragilidad conocida.
 
 **Notas técnicas** (v1.0.6+):
 - **Tipo 6** (primeros 20 chars): Requiere concepto con al menos 20 caracteres para evitar falsos positivos.
@@ -245,7 +247,15 @@ ImportScreen (Compose)
 - Extracción vía `CategorizationUseCase.extractRange(concept, rule)`: convierte a índice 0-based (`start - 1`), valida límites (`startIndex >= 0 && startIndex < concept.length`, `end >= start`) y hace `substring(startIndex, minOf(end, concept.length))`.
 - Motivo: el rango fijo 18-30 no cubría todos los formatos de concepto reales de los bancos; ahora cada regla puede definir su propio rango en el formulario (`RuleDialog`, campos "Inicio"/"Fin", solo visibles para tipos 4 y 7).
 - `RulesRepository.updateRule()` escribe `range_start`/`range_end` incondicionalmente (a diferencia de `value2..4`), para poder persistir su borrado y volver al rango por defecto.
-- Migración requerida: `alter table categorization_rule add column range_start int, add column range_end int` (ver `migration_range_columns.sql`).
+- Migración: `alter table categorization_rule add column range_start int, add column range_end int` (ver `migration_range_columns.sql`).
+
+**Distinción gasto/ingreso en reglas por importe** (v1.0.15+, tipos 5, 6 y 7):
+- `CategorizationRule.is_income: Boolean = false`. `false` = la regla espera un gasto; `true` = espera un ingreso.
+- `CategorizationUseCase.flowTypeMatches(flowType, isIncome)` compara `transaction.flowType` ("D"/"H", igual convención que `CategoryGroup.flowType`) contra el esperado — **no** el signo de `amount`, que no distingue gasto/ingreso de forma fiable en este modelo (`Transaction.flowType` es el campo real para eso).
+- El límite/rango de importe (`value2`/`value3`/`value4` según el tipo) se compara siempre contra `kotlin.math.abs(transaction.amount)`; se introduce como número positivo en el formulario, sea la regla de gasto o de ingreso.
+- Motivo: antes de esto, `value2..4` se comparaban directamente contra `amount` sin distinguir cargo/abono, así que una misma descripción con importes a veces negativos y a veces positivos (ej. cargos y reembolsos de un mismo servicio) no se podía categorizar de forma diferenciada con dos reglas.
+- `RuleDialog`: `Checkbox` "Ingreso (flow_type = H)" / "Gasto (flow_type = D)", visible solo para tipos 5, 6, 7. `RuleItem` muestra "Solo ingresos"/"Solo gastos" en la tarjeta.
+- Migración: `alter table categorization_rule add column is_income boolean not null default false` (ver `migration_income_flag_and_cleanup.sql`).
 
 ## 5.3 Cifrado (data/EncryptionManager)
 
@@ -393,14 +403,15 @@ create table categorization_rule (
   group_id int not null references category_group(id),
   value1 text, value2 text, value3 text, value4 text,
   range_start int, -- posición inicial (1-based, tipos 4/7). NULL = 18 por defecto
-  range_end int -- posición final inclusive (1-based, tipos 4/7). NULL = 30 por defecto
+  range_end int, -- posición final inclusive (1-based, tipos 4/7). NULL = 30 por defecto
+  is_income boolean not null default false -- false=gasto (flow_type D), true=ingreso (flow_type H). Solo tipos 5/6/7
 );
 
 create table categorization_exception (
   id serial primary key,
   month text not null, -- YYYY YYYYMM
   group_id int not null references category_group(id),
-  value1 text, value2 text
+  value1 text -- value2 existió hasta v1.0.14 pero nunca se usó en el matching; eliminado en v1.0.15
 );
 
 create table app_param (
@@ -483,4 +494,4 @@ ADMIN_EMAIL=admin@example.com
 
 ---
 
-*Generado: 2025-07-06 | Actualizado: 2026-07-12 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.14 | Última sync: Rango de posiciones configurable por regla (range_start/range_end) en reglas automáticas tipo 4 y 7 (CategorizationUseCase.kt, CategorizationRepository.kt, RulesRepository.kt, CategoriesScreen.kt)
+*Generado: 2025-07-06 | Actualizado: 2026-07-12 | Proyecto: AppKotlinIngGas | Versión actual: 1.0.15 | Última sync: Flag is_income (gasto/ingreso vía flow_type) en reglas tipo 5/6/7 con comparación de importe en valor absoluto, y eliminación de value2 (no usado) en excepciones manuales (CategorizationUseCase.kt, CategorizationRepository.kt, RulesRepository.kt, CategoriesScreen.kt)

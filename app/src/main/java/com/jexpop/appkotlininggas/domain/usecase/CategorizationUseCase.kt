@@ -56,9 +56,9 @@ class CategorizationUseCase(
                 1 -> matchFullText(transaction.concept, rule)
                 2 -> matchFirst15(transaction.concept, rule)
                 4 -> matchFirst3AndPositions(transaction.concept, rule)
-                5 -> matchFirst3WithAmount(transaction.concept, transaction.amount, rule)
-                6 -> matchFirst20WithAmount(transaction.concept, transaction.amount, rule)
-                7 -> matchFirst3PositionsWithAmount(transaction.concept, transaction.amount, rule)
+                5 -> matchFirst3WithAmount(transaction.concept, transaction, rule)
+                6 -> matchFirst20WithAmount(transaction.concept, transaction, rule)
+                7 -> matchFirst3PositionsWithAmount(transaction.concept, transaction, rule)
                 99 -> transaction.paymentType == "C"
                 else -> false
             }
@@ -101,41 +101,61 @@ class CategorizationUseCase(
                 rule.value2?.let { rangeText.contains(it, ignoreCase = true) } == true
     }
 
-    // Tipo 5: primeros 3 chars + valor numérico de corte
-    private fun matchFirst3WithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
+    /**
+     * El importe esperado por una regla (value2/value3/value4 en tipos 5, 6, 7) se
+     * introduce siempre como valor absoluto positivo. Si la transacción es un gasto
+     * o un ingreso lo decide flow_type ("D"/"H"), no el signo de amount (que no es
+     * fiable como distinción gasto/ingreso en este modelo). rule.is_income decide
+     * qué flow_type espera la regla, para poder distinguir conceptos idénticos que
+     * a veces son un cargo y a veces un abono.
+     */
+    private fun flowTypeMatches(flowType: String, isIncome: Boolean): Boolean {
+        val expected = if (isIncome) "H" else "D"
+        return flowType == expected
+    }
+
+    // Tipo 5: primeros 3 chars + valor numérico de corte (gasto por defecto, is_income=true para ingresos)
+    private fun matchFirst3WithAmount(concept: String, transaction: Transaction, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
         val cutoff = rule.value2?.toDoubleOrNull() ?: return false
         val comparison = rule.value3 ?: return false
         val first3Match = rule.value1?.let { first3.equals(it, ignoreCase = true) } == true
+        if (!flowTypeMatches(transaction.flowType, rule.is_income)) return false
+        val absAmount = kotlin.math.abs(transaction.amount)
         val amountMatch = when (comparison) {
-            ">" -> amount > cutoff
-            "<" -> amount < cutoff
-            ">=" -> amount >= cutoff
-            "<=" -> amount <= cutoff
+            ">" -> absAmount > cutoff
+            "<" -> absAmount < cutoff
+            ">=" -> absAmount >= cutoff
+            "<=" -> absAmount <= cutoff
             else -> false
         }
         return first3Match && amountMatch
     }
 
-    // Tipo 6: primeros 20 chars + rango de importe
-    private fun matchFirst20WithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
+    // Tipo 6: primeros 20 chars + rango de importe (gasto por defecto, is_income=true para ingresos)
+    private fun matchFirst20WithAmount(concept: String, transaction: Transaction, rule: CategorizationRule): Boolean {
         // Validar que hay suficientes caracteres para capturar primeros 20
         if (concept.length < 20) return false
         val first20 = concept.take(20)
         val min = rule.value2?.toDoubleOrNull() ?: return false
         val max = rule.value3?.toDoubleOrNull() ?: return false
+        if (!flowTypeMatches(transaction.flowType, rule.is_income)) return false
+        val absAmount = kotlin.math.abs(transaction.amount)
         return rule.value1?.let { first20.contains(it, ignoreCase = true) } == true &&
-                amount >= min && amount <= max
+                absAmount >= min && absAmount <= max
     }
 
     // Tipo 7: primeros 3 chars + rango configurable (por defecto 18-30) + rango de importe
-    private fun matchFirst3PositionsWithAmount(concept: String, amount: Double, rule: CategorizationRule): Boolean {
+    // (gasto por defecto, is_income=true para ingresos)
+    private fun matchFirst3PositionsWithAmount(concept: String, transaction: Transaction, rule: CategorizationRule): Boolean {
         val first3 = concept.take(3)
         val rangeText = extractRange(concept, rule)
         val min = rule.value3?.toDoubleOrNull() ?: return false
         val max = rule.value4?.toDoubleOrNull() ?: return false
+        if (!flowTypeMatches(transaction.flowType, rule.is_income)) return false
+        val absAmount = kotlin.math.abs(transaction.amount)
         return rule.value1?.let { first3.equals(it, ignoreCase = true) } == true &&
                 rule.value2?.let { rangeText.contains(it, ignoreCase = true) } == true &&
-                amount >= min && amount <= max
+                absAmount >= min && absAmount <= max
     }
 }
