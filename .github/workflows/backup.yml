@@ -10,23 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping y backup cifrado
+      - name: Generar backup SQL con Docker
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          ENCRYPTION_PASSWORD: ${{ secrets.ENCRYPTION_PASSWORD }}
         run: |
-          # Generar backup SQL con Docker
-          FILENAME="backup_$(date +%Y%m%d).sql.enc"
+          FILENAME="backup_$(date +%Y%m%d).sql"
           
           docker run --rm \
             -v $PWD:/backup \
             -e SUPABASE_DB_URL="$SUPABASE_DB_URL" \
             postgres:17 \
             bash -c 'pg_dump "$SUPABASE_DB_URL" > /backup/backup.sql'
-          
-          echo "Backup SQL generado"
+
+          echo "Backup SQL generado: backup.sql"
 
       - name: Cifrar y subir a Supabase Storage
         env:
@@ -35,7 +31,7 @@ jobs:
           ENCRYPTION_PASSWORD: ${{ secrets.ENCRYPTION_PASSWORD }}
         run: |
           pip3 install cryptography supabase --quiet
-          
+
           python3 << 'EOF'
           import os
           import secrets as sec
@@ -45,29 +41,29 @@ jobs:
           from supabase import create_client
           from datetime import datetime
 
-          # Cifrar
+          # Derivar clave
           password = os.environ['ENCRYPTION_PASSWORD'].encode()
           salt = b'ecogar_salt_v1'
           kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
           key = kdf.derive(password)
 
+          # Leer backup SQL
           with open('backup.sql', 'rb') as f:
               data = f.read()
 
+          # Cifrado AES-GCM
           iv = sec.token_bytes(12)
           aesgcm = AESGCM(key)
           encrypted = iv + aesgcm.encrypt(iv, data, None)
 
           # Subir a Supabase Storage
           filename = f"backup_{datetime.now().strftime('%Y%m%d')}.sql.enc"
-          url = os.environ['SUPABASE_URL']
-          key_sb = os.environ['SUPABASE_SERVICE_KEY']
-          client = create_client(url, key_sb)
+          client = create_client(os.environ['SUPABASE_URL'], os.environ['SUPABASE_SERVICE_KEY'])
           path = f"sql/{filename}"
           client.storage.from_('backups').upload(path, encrypted, {"upsert": "true"})
           print(f"Backup cifrado subido: {path}")
 
-          # Limpiar fichero temporal
+          # Limpiar
           os.remove('backup.sql')
           print("Fichero temporal eliminado")
           EOF
