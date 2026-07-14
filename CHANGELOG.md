@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.16] - 2026-07-14
+
+### Added
+- **Sincronización automática de backups SQL al arrancar** (`MainActivity.kt`, `DriveManager.kt`, `StorageManager.kt`): al abrir la app, si la cuenta de Google Drive conectada coincide con `BuildConfig.DRIVE_ALLOWED_EMAIL`, se sincroniza `backups/sql` de Supabase con `ecogar/backups/sql` en Drive. El flujo actúa como espejo por nombre: si un archivo existe en Supabase y falta en Drive, se sube con el mismo nombre. Los artefactos de carpeta como `.emptyFolderPlaceholder` se ignoran para no tratarlos como backups válidos.
+- **Estado de Drive en Ajustes** (`ui/screens/settings/SettingsViewModel.kt`, `SettingsScreen.kt`): se muestra el correo de Drive conectado y si está autorizado para la sincronización automática.
+
+### Fixed
+- **Cierre de app por `Toast` en hilo de fondo** (`MainActivity.kt`): el aviso de sincronización automática ahora se lanza en el hilo principal, evitando el crash `Can't toast on a thread that has not called Looper.prepare()`.
+
+### Changed
+- El flujo de backups CSV sigue siendo independiente y mantiene su comportamiento previo en `backups/csv` y `ecogar/backups/csv`.
+
+---
+
 ## [1.0.15] - 2026-07-12
 
 ### Added

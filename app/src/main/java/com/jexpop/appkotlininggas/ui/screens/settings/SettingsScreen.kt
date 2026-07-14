@@ -36,6 +36,8 @@ fun SettingsScreen(
     val state by viewModel.state.collectAsState()
     val isEncryptionConfigured by viewModel.isEncryptionConfigured.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
+    val driveAccountEmail by viewModel.driveAccountEmail.collectAsState()
+    val isDriveAuthorized by viewModel.isDriveAuthorized.collectAsState()
     var showPasswordDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordWarning by remember { mutableStateOf(false) }
@@ -266,6 +268,35 @@ fun SettingsScreen(
                     Text(
                         if (isDriveConnected) stringResource(R.string.settings_drive_disconnect)
                         else stringResource(R.string.settings_drive_connect)
+                    )
+                }
+            }
+        }
+
+        if (isDriveConnected) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Cuenta de Drive",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = driveAccountEmail ?: "—",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (isDriveAuthorized) {
+                            "Autorizada para sincronización automática"
+                        } else {
+                            "No autorizada para sincronización automática"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isDriveAuthorized) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        }
                     )
                 }
             }

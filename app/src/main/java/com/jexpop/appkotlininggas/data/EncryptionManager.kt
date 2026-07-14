@@ -19,6 +19,8 @@ object EncryptionManager {
     private const val PREFS_FILE = "ecogar_secure_prefs"
     private const val KEY_PASSWORD = "encryption_password"
     private const val KEY_SALT = "encryption_salt"
+    private const val KEY_PENDING_DRIVE_BACKUP_NAME = "pending_drive_backup_name"
+    private const val KEY_PENDING_DRIVE_BACKUP_DATA = "pending_drive_backup_data"
     private const val PBKDF2_ITERATIONS = 100000
     private const val KEY_LENGTH = 256
     private const val TAG = "EncryptionManager"
@@ -154,6 +156,30 @@ object EncryptionManager {
             prefs.edit().putString(KEY_SALT, saltB64).apply()
             Log.d(TAG, "Nuevo salt inicializado")
         }
+    }
+
+    fun savePendingDriveBackup(context: Context, fileName: String, data: ByteArray) {
+        val prefs = getEncryptedPrefs(context)
+        prefs.edit()
+            .putString(KEY_PENDING_DRIVE_BACKUP_NAME, fileName)
+            .putString(KEY_PENDING_DRIVE_BACKUP_DATA, Base64.encodeToString(data, Base64.NO_WRAP))
+            .apply()
+    }
+
+    fun getPendingDriveBackup(context: Context): Pair<String, ByteArray>? {
+        val prefs = getEncryptedPrefs(context)
+        val fileName = prefs.getString(KEY_PENDING_DRIVE_BACKUP_NAME, null) ?: return null
+        val dataB64 = prefs.getString(KEY_PENDING_DRIVE_BACKUP_DATA, null) ?: return null
+        return runCatching {
+            fileName to Base64.decode(dataB64, Base64.NO_WRAP)
+        }.getOrNull()
+    }
+
+    fun clearPendingDriveBackup(context: Context) {
+        getEncryptedPrefs(context).edit()
+            .remove(KEY_PENDING_DRIVE_BACKUP_NAME)
+            .remove(KEY_PENDING_DRIVE_BACKUP_DATA)
+            .apply()
     }
 
 }

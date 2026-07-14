@@ -13,8 +13,8 @@ android {
         applicationId = "com.jexpop.appkotlininggas"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.0.15"
+        versionCode = 16
+        versionName = "1.0.16"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val properties = org.jetbrains.kotlin.konan.properties.loadProperties(
@@ -23,6 +23,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"${properties["SUPABASE_URL"]}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${properties["SUPABASE_KEY"]}\"")
         buildConfigField("String", "ADMIN_EMAIL", "\"${properties["ADMIN_EMAIL"]}\"")
+        buildConfigField("String", "DRIVE_ALLOWED_EMAIL", "\"${properties["DRIVE_ALLOWED_EMAIL"] ?: properties["ADMIN_EMAIL"]}\"")
     }
 
     buildTypes {

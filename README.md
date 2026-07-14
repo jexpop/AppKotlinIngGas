@@ -2,6 +2,14 @@
 
 Aplicación Android (Kotlin + Jetpack Compose) para gestión de finanzas personales con importación CSV, categorización automática, backup cifrado y sincronización Supabase/Google Drive.
 
+La sincronización de backups SQL se ejecuta automáticamente al iniciar la app para la cuenta autorizada, espejando `backups/sql` en Supabase con `ecogar/backups/sql` en Drive. El flujo CSV sigue siendo independiente.
+
+### Primera prueba
+
+1. Conecta tu cuenta de Google Drive una sola vez desde Ajustes.
+2. Asegúrate de que `DRIVE_ALLOWED_EMAIL` en `local.properties` coincide con tu Gmail.
+3. Abre la app: al arrancar se sincronizarán automáticamente los backups SQL que falten en Drive.
+
 **Versión actual:** 1.0.15
 
 ---

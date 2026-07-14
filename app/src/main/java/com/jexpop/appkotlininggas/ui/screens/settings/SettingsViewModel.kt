@@ -43,6 +43,12 @@ class SettingsViewModel(
     private val _isDriveConnected = MutableStateFlow(false)
     val isDriveConnected: StateFlow<Boolean> = _isDriveConnected
 
+    private val _driveAccountEmail = MutableStateFlow<String?>(null)
+    val driveAccountEmail: StateFlow<String?> = _driveAccountEmail
+
+    private val _isDriveAuthorized = MutableStateFlow(false)
+    val isDriveAuthorized: StateFlow<Boolean> = _isDriveAuthorized
+
 
     private val _tokenExpiry = MutableStateFlow<String?>(null)
     val tokenExpiry: StateFlow<String?> = _tokenExpiry
@@ -186,11 +192,18 @@ class SettingsViewModel(
 
     fun checkDriveConnection(context: android.content.Context) {
         _isDriveConnected.value = DriveAuthManager.isSignedIn(context)
+        _driveAccountEmail.value = DriveAuthManager.getSignedInEmail(context)
+        _isDriveAuthorized.value = DriveAuthManager.isAuthorizedAccount(
+            context,
+            BuildConfig.DRIVE_ALLOWED_EMAIL
+        )
     }
 
     fun disconnectDrive(context: android.content.Context) {
         DriveAuthManager.signOut(context)
         _isDriveConnected.value = false
+        _driveAccountEmail.value = null
+        _isDriveAuthorized.value = false
     }
 
     fun updateGithubToken(token: String) {

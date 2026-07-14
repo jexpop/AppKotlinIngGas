@@ -273,10 +273,16 @@ ImportScreen (Compose)
 
 | Destino | Clase | Path/Bucket |
 |---------|-------|-------------|
-| Supabase Storage | `StorageManager` | `backups/csv/{filename}` |
-| Google Drive | `DriveManager` | `ecogar/backups/csv/{filename}` |
+| Supabase Storage | `StorageManager` | `backups/csv/{filename}` y `backups/sql/{filename}` |
+| Google Drive | `DriveManager` | `ecogar/backups/csv/{filename}` y `ecogar/backups/sql/{filename}` |
 
 Ambos usan `upsert=true` (sobrescriben si existe).
+
+**Sincronización automática al arrancar**:
+- Al iniciar la app, si hay sesión de Google Drive y el correo autenticado coincide con `BuildConfig.DRIVE_ALLOWED_EMAIL`, se sincroniza `backups/sql` de Supabase con `ecogar/backups/sql` en Drive.
+- La sincronización SQL funciona como espejo por nombre: si un fichero existe en Supabase y no en Drive, se sube con el mismo nombre.
+- El flujo CSV sigue independiente: las importaciones de CSV continúan subiendo a `backups/csv` y `ecogar/backups/csv` sin solaparse con SQL.
+- Se ignoran artefactos de carpeta como `.emptyFolderPlaceholder` para no tratarlos como backups válidos.
 
 ### 5.5 Autenticación
 
